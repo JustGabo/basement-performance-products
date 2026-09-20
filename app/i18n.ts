@@ -4,7 +4,7 @@ export const translations = {
   en: {
     language: "Language",
     nav: { shop: "Shop", builds: "Builds", journal: "Journal", about: "About" },
-    header: { search: "Search products", contact: "Contact us", cart: "items in cart", menu: "Open menu" },
+    header: { search: "Search products", contact: "Customer account", cart: "items in cart", menu: "Open menu" },
     hero: {
       label: "Featured builds gallery",
       eyebrow: "Built beyond ordinary",
@@ -23,10 +23,13 @@ export const translations = {
     },
     products: {
       kicker: "Featured products",
-      title: "Shop performance",
+      title: "Shop carbon fiber",
       viewAll: "View all products",
       save: "Save",
       add: "Add to cart",
+      previousPage: "Previous product page",
+      nextPage: "Next product page",
+      goToPage: "Go to product page",
     },
     gallery: {
       kicker: "From the community",
@@ -74,7 +77,7 @@ export const translations = {
   es: {
     language: "Idioma",
     nav: { shop: "Tienda", builds: "Proyectos", journal: "Revista", about: "Nosotros" },
-    header: { search: "Buscar productos", contact: "Contáctanos", cart: "artículos en el carrito", menu: "Abrir menú" },
+    header: { search: "Buscar productos", contact: "Cuenta de cliente", cart: "artículos en el carrito", menu: "Abrir menú" },
     hero: {
       label: "Galería de proyectos destacados",
       eyebrow: "Construido fuera de lo común",
@@ -93,10 +96,13 @@ export const translations = {
     },
     products: {
       kicker: "Productos destacados",
-      title: "Piezas de alto rendimiento",
+      title: "Compra fibra de carbono",
       viewAll: "Ver todos los productos",
       save: "Guardar",
       add: "Agregar al carrito",
+      previousPage: "Página anterior de productos",
+      nextPage: "Página siguiente de productos",
+      goToPage: "Ir a la página de productos",
     },
     gallery: {
       kicker: "Desde la comunidad",

@@ -1,8 +1,14 @@
 "use client";
 
 import Image from "next/image";
+import Link from "next/link";
+import { ArrowRight, Camera, ChevronLeft, ChevronRight, Heart, Menu, Music2, Play, Search, ShoppingCart, UserRound, Zap } from "lucide-react";
 import { useEffect, useState } from "react";
 import { translations, type Locale } from "./i18n";
+
+const shell = "mx-auto w-[min(1480px,calc(100%_-_56px))] max-[700px]:w-[calc(100%_-_32px)]";
+const display = "font-display font-bold uppercase";
+const button = "inline-flex min-h-13 items-center justify-center gap-5 border px-7 text-[11px] font-black tracking-[.04em] uppercase transition max-[700px]:min-h-12 max-[700px]:px-5";
 
 const categories = [
   { key: "aero" as const, image: "/images/category-aero.png" },
@@ -18,6 +24,14 @@ const products = [
   ["Ram Air System", "High-flow intake system", "$720", "18% 78%"],
   ["Track Series", "Forged performance wheel", "$890", "72% 73%"],
   ["Club Steering", "Carbon steering wheel", "$640", "48% 82%"],
+  ["R35 Side Line", "Carbon side skirt extensions", "$980", "74% 58%"],
+  ["G80 Aero Fins", "Carbon front canards", "$520", "24% 56%"],
+  ["A90 Heat Extract", "Carbon hood vents", "$760", "66% 48%"],
+  ["FL5 Rear Spats", "Carbon rear bumper spats", "$590", "75% 70%"],
+  ["Swan Neck GT", "Universal carbon rear wing", "$1,850", "50% 20%"],
+  ["Velocity Intake", "Cold air intake system", "$680", "22% 76%"],
+  ["Circuit Mono", "Forged monoblock wheel", "$940", "70% 72%"],
+  ["Driver Carbon", "Carbon performance wheel", "$690", "46% 80%"],
 ];
 
 const stories = [
@@ -39,24 +53,20 @@ const buildGallery = [
   { src: "/images/build-honda-js-racing-lip.png", title: "Front Lip JS Racing", meta: "Honda" },
 ];
 
-function Icon({ name, size = 20 }: { name: "search" | "user" | "cart" | "heart" | "menu" | "arrow"; size?: number }) {
-  const paths = {
-    search: <><circle cx="11" cy="11" r="7" /><path d="m20 20-4-4" /></>,
-    user: <><circle cx="12" cy="8" r="4" /><path d="M4 21c.8-5 3.5-7 8-7s7.2 2 8 7" /></>,
-    cart: <><path d="M3 4h2l2.2 11h10.9l2-8H6" /><circle cx="9" cy="20" r="1" /><circle cx="18" cy="20" r="1" /></>,
-    heart: <path d="M20.8 4.7a5.5 5.5 0 0 0-7.8 0L12 5.8l-1.1-1.1a5.5 5.5 0 0 0-7.8 7.8L12 21l8.8-8.5a5.5 5.5 0 0 0 0-7.8Z" />,
-    menu: <path d="M4 7h16M4 12h16M4 17h16" />,
-    arrow: <path d="M5 12h14M14 7l5 5-5 5" />,
-  };
-  return <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.7" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">{paths[name]}</svg>;
-}
+const productsPerPage = 8;
 
 function Logo() {
-  return <a className="logo" href="#top" aria-label="Basement Performance Products home"><svg className="logo-bolt" viewBox="0 0 24 32" aria-hidden="true"><path d="M14.8 1 3 18.2h7.3L8.8 31 21 13.3h-7.4L14.8 1Z" /></svg><strong>BASEMENT</strong><span>PERFORMANCE<br />PRODUCTS</span></a>;
+  return <a className="[grid-area:logo] flex w-max items-center gap-5 justify-self-center max-[700px]:gap-2.5" href="#top" aria-label="Basement Performance Products home">
+    <Zap className="order-none h-7 w-5 fill-brand text-brand drop-shadow-[0_0_8px_rgba(243,180,2,.2)] max-[700px]:order-2 max-[700px]:h-5.5 max-[700px]:w-4" />
+    <strong className="text-[30px] leading-none font-black tracking-[-.05em] italic max-[700px]:order-1 max-[700px]:text-[23px]">BASEMENT</strong>
+    <span className="border-l border-white/40 pl-4.5 text-[8px] leading-[1.4] font-bold tracking-[.28em] max-[700px]:hidden">PERFORMANCE<br />PRODUCTS</span>
+  </a>;
 }
 
 function LocaleSwitch({ locale, label, onChange }: { locale: Locale; label: string; onChange: (locale: Locale) => void }) {
-  return <div className="locale-switch" role="group" aria-label={label}><button className={locale === "en" ? "active" : ""} onClick={() => onChange("en")} aria-pressed={locale === "en"}>EN</button><span>/</span><button className={locale === "es" ? "active" : ""} onClick={() => onChange("es")} aria-pressed={locale === "es"}>ES</button></div>;
+  return <div className="flex items-center gap-0.5 rounded-full border border-white/20 bg-black/45 p-1" role="group" aria-label={label}>
+    {(["en", "es"] as const).map((item, index) => <span className="contents" key={item}>{index > 0 && <i className="text-[9px] not-italic text-white/30">/</i>}<button className={`h-6 min-w-7 cursor-pointer rounded-full border-0 px-1 text-[9px] font-extrabold ${locale === item ? "bg-brand text-black" : "bg-transparent text-white/45"}`} onClick={() => onChange(item)} aria-pressed={locale === item}>{item.toUpperCase()}</button></span>)}
+  </div>;
 }
 
 export default function Home() {
@@ -64,14 +74,23 @@ export default function Home() {
   const [saved, setSaved] = useState<string[]>([]);
   const [subscribed, setSubscribed] = useState(false);
   const [activeSlide, setActiveSlide] = useState(0);
+  const [productPage, setProductPage] = useState(1);
   const [locale, setLocale] = useState<Locale>("en");
   const t = translations[locale];
+  const totalProductPages = Math.max(1, Math.ceil(products.length / productsPerPage));
+  const visibleProducts = products.slice((productPage - 1) * productsPerPage, productPage * productsPerPage);
   const toggleSaved = (name: string) => setSaved((items) => items.includes(name) ? items.filter((item) => item !== name) : [...items, name]);
 
-  const changeLocale = (nextLocale: Locale) => {
-    setLocale(nextLocale);
-    window.localStorage.setItem("basement-locale", nextLocale);
-    document.documentElement.lang = nextLocale;
+  const changeProductPage = (page: number) => {
+    if (page < 1 || page > totalProductPages || page === productPage) return;
+    setProductPage(page);
+    document.querySelector("#products")?.scrollIntoView({ behavior: "smooth", block: "start" });
+  };
+
+  const changeLocale = (next: Locale) => {
+    setLocale(next);
+    window.localStorage.setItem("basement-locale", next);
+    document.documentElement.setAttribute("lang", next);
   };
 
   useEffect(() => {
@@ -79,7 +98,7 @@ export default function Home() {
       const storedLocale = window.localStorage.getItem("basement-locale");
       if (storedLocale === "en" || storedLocale === "es") {
         setLocale(storedLocale);
-        document.documentElement.lang = storedLocale;
+        document.documentElement.setAttribute("lang", storedLocale);
       }
     }, 0);
     return () => window.clearTimeout(restoreLocale);
@@ -90,67 +109,89 @@ export default function Home() {
     return () => window.clearInterval(timer);
   }, []);
 
-  return <main id="top">
-    <header className="header shell">
+  return <main id="top" className="overflow-hidden bg-ink text-[#f5f5f2]">
+    <header className="absolute top-0 left-0 z-30 grid h-21 w-full grid-cols-[1fr_auto_1fr] [grid-template-areas:'nav_logo_tools'] items-center gap-9 border-b border-white/12 bg-[linear-gradient(180deg,rgba(5,7,7,.82),rgba(5,7,7,.58))] px-[max(28px,calc((100vw-1480px)/2))] shadow-xl backdrop-blur-xl max-[1000px]:[grid-template-areas:'empty_logo_tools'] max-[700px]:h-18 max-[700px]:px-5">
       <Logo />
-      <nav aria-label="Main navigation"><a href="#shop">{t.nav.shop}</a><a href="#build-gallery">{t.nav.builds}</a><a href="#journal">{t.nav.journal}</a><a href="#about">{t.nav.about}</a></nav>
-      <div className="tools"><LocaleSwitch locale={locale} label={t.language} onChange={changeLocale} /><button aria-label={t.header.search} onClick={() => document.querySelector("#products")?.scrollIntoView()}><Icon name="search" /></button><a aria-label={t.header.contact} href="mailto:hello@basementperformance.com"><Icon name="user" /></a><button aria-label={`${cart} ${t.header.cart}`} onClick={() => document.querySelector("#products")?.scrollIntoView()}><Icon name="cart" /><small>{cart}</small></button></div>
-      <div className="mobile-actions"><LocaleSwitch locale={locale} label={t.language} onChange={changeLocale} /><details className="mobile-menu"><summary aria-label={t.header.menu}><Icon name="menu" size={24} /></summary><div><a href="#shop">{t.nav.shop}</a><a href="#build-gallery">{t.nav.builds}</a><a href="#journal">{t.nav.journal}</a><a href="#about">{t.nav.about}</a></div></details></div>
+      <nav className="[grid-area:nav] flex gap-8 text-[10px] font-bold uppercase max-[1000px]:hidden" aria-label="Main navigation"><a className="transition hover:text-brand" href="#shop">{t.nav.shop}</a><a className="transition hover:text-brand" href="#build-gallery">{t.nav.builds}</a><a className="transition hover:text-brand" href="#journal">{t.nav.journal}</a><a className="transition hover:text-brand" href="#about">{t.nav.about}</a></nav>
+      <div className="[grid-area:tools] flex items-center justify-self-end gap-4 max-[1000px]:hidden"><LocaleSwitch locale={locale} label={t.language} onChange={changeLocale} /><button className="cursor-pointer border-0 bg-transparent p-1" aria-label={t.header.search} onClick={() => document.querySelector("#products")?.scrollIntoView()}><Search size={20} /></button><Link className="p-1" aria-label={t.header.contact} href="/sign-in"><UserRound size={20} /></Link><button className="relative cursor-pointer border-0 bg-transparent p-1" aria-label={`${cart} ${t.header.cart}`} onClick={() => document.querySelector("#products")?.scrollIntoView()}><ShoppingCart size={20} /><small className="absolute -top-1 -right-2 text-[9px]">{cart}</small></button></div>
+      <div className="[grid-area:tools] hidden items-center justify-self-end gap-2 max-[1000px]:flex"><LocaleSwitch locale={locale} label={t.language} onChange={changeLocale} /><details className="relative"><summary className="flex cursor-pointer list-none p-1" aria-label={t.header.menu}><Menu size={24} /></summary><div className="absolute top-10 right-0 grid min-w-40 gap-4 border border-white/15 bg-black/95 p-5 text-xs uppercase shadow-2xl"><a href="#shop">{t.nav.shop}</a><a href="#build-gallery">{t.nav.builds}</a><a href="#journal">{t.nav.journal}</a><a href="#about">{t.nav.about}</a><Link href="/sign-in">{t.header.contact}</Link></div></details></div>
     </header>
 
-    <section className="hero" aria-label={t.hero.label}>
-      <div className="hero-gallery">
-        {gallerySlides.map((slide, index) => <div className={`hero-slide ${index === activeSlide ? "active" : ""}`} aria-hidden={index !== activeSlide} key={slide.src}><Image src={slide.src} alt={index === activeSlide ? slide.alt : ""} fill priority={index === 0} sizes="100vw" /></div>)}
-      </div>
-      <div className="hero-shade" />
-      <div className="shell hero-content">
-        <p className="eyebrow">{t.hero.eyebrow}</p>
-        <h1>{t.hero.titleOne}<br /><em>{t.hero.titleTwo}</em></h1>
-        <p className="hero-copy">{t.hero.copy}</p>
-        <div className="hero-actions">
-          <a className="btn solid" href="#shop">{t.hero.primary} <Icon name="arrow" size={17} /></a>
-          <a className="btn ghost" href="#build-gallery">{t.hero.secondary}</a>
+    <section className="relative min-h-175 overflow-hidden border-b border-white/10 max-[700px]:min-h-147.5" aria-label={t.hero.label}>
+      <div className="absolute inset-0">{gallerySlides.map((slide, index) => <div className={`absolute inset-0 transition-opacity duration-700 ${index === activeSlide ? "opacity-100" : "opacity-0"}`} aria-hidden={index !== activeSlide} key={slide.src}><Image className="object-cover object-center max-[700px]:object-[64%_center]" src={slide.src} alt={index === activeSlide ? slide.alt : ""} fill priority={index === 0} sizes="100vw" /></div>)}</div>
+      <div className="absolute inset-0 bg-[linear-gradient(90deg,rgba(2,3,3,.96)_0%,rgba(2,3,3,.7)_30%,rgba(2,3,3,.08)_68%)] max-[700px]:bg-[linear-gradient(0deg,rgba(2,3,3,.98)_6%,rgba(2,3,3,.62)_66%,rgba(2,3,3,.18))]" />
+      <div className={`${shell} relative z-10 flex min-h-175 items-center pt-21 max-[700px]:min-h-147.5 max-[700px]:items-end max-[700px]:pt-18 max-[700px]:pb-16`}>
+        <div className="flex flex-col gap-7">
+          <div className="flex flex-col gap-5">
+            <p className="text-[11px] font-black tracking-[.18em] text-brand uppercase">{t.hero.eyebrow}</p>
+            <h1 className={`${display} text-[clamp(68px,8vw,132px)] leading-[.84] tracking-[-.045em] max-[700px]:text-[54px]`}>{t.hero.titleOne}<br /><em className="not-italic text-brand">{t.hero.titleTwo}</em></h1>
+          </div>
+          <p className="max-w-150 text-xs font-semibold tracking-[.08em] uppercase max-[700px]:max-w-80 max-[700px]:text-[9px]">{t.hero.copy}</p>
+          <div className="flex gap-3"><a className={`${button} border-brand bg-brand text-black hover:bg-transparent hover:text-brand`} href="#shop">{t.hero.primary}<ArrowRight size={17} /></a><a className={`${button} border-brand text-brand hover:bg-brand hover:text-black`} href="#build-gallery">{t.hero.secondary}</a></div>
         </div>
       </div>
-      <div className="slides" aria-label={t.hero.controls}>{gallerySlides.map((_, index) => <button className={index === activeSlide ? "active" : ""} onClick={() => setActiveSlide(index)} aria-label={`${t.hero.showImage} ${index + 1}`} aria-current={index === activeSlide ? "true" : undefined} key={index}>{String(index + 1).padStart(2, "0")}</button>)}</div>
+      <div className="absolute right-[max(28px,calc((100vw-1480px)/2))] bottom-7 z-10 flex gap-3 max-[700px]:hidden" aria-label={t.hero.controls}>{gallerySlides.map((_, index) => <button className={`cursor-pointer border-0 border-b-2 bg-transparent px-1 pb-2 text-[10px] font-bold ${index === activeSlide ? "border-brand text-white" : "border-white/20 text-white/55"}`} onClick={() => setActiveSlide(index)} aria-label={`${t.hero.showImage} ${index + 1}`} aria-current={index === activeSlide ? "true" : undefined} key={index}>{String(index + 1).padStart(2, "0")}</button>)}</div>
     </section>
 
-    <section className="shell categories" id="shop" aria-label={t.categories.label}>
-      {categories.map(({ key, image }) => { const category = t.categories[key]; return <a href="#products" className="category" key={key}><div className="category-photo"><Image src={image} alt={category.name} fill sizes="(max-width: 700px) 100vw, 50vw" /></div><div><h3>{category.name}</h3><p>{category.copy}</p></div><span>→</span></a>; })}
+    <section className={`${shell} grid grid-cols-2 gap-5 py-6 max-[700px]:w-full max-[700px]:grid-cols-1 max-[700px]:px-4`} id="shop" aria-label={t.categories.label}>
+      {categories.map(({ key, image }) => { const category = t.categories[key]; return <a href="#products" className="group relative h-80 overflow-hidden rounded-sm border border-white/20 max-[700px]:h-75" key={key}><Image className="object-cover transition duration-500 group-hover:scale-[1.03]" src={image} alt={category.name} fill sizes="(max-width: 700px) 100vw, 50vw" /><div className="absolute inset-0 bg-gradient-to-t from-black via-black/15 to-transparent" /><div className="absolute right-5 bottom-5 left-5 flex flex-col gap-1"><h3 className={`${display} text-3xl`}>{category.name}</h3><p className="text-xs text-white/70">{category.copy}</p></div><ArrowRight className="absolute right-5 bottom-6 text-brand" size={20} /></a>; })}
     </section>
 
-    <section className="shell products-section" id="products">
-      <div className="section-kicker">{t.products.kicker}</div>
-      <div className="section-title"><h2>{t.products.title}</h2><div /><a href="#shop">{t.products.viewAll} <span>→</span></a></div>
-      <div className="product-grid">{products.map(([name, part, price, pos], i) => <article className="product" key={name}>
-        <div className="product-photo"><Image src={i % 2 ? "/images/performance-parts.png" : "/images/hero-car.png"} alt={name} fill sizes="(max-width: 700px) 85vw, 25vw" style={{ objectPosition: pos }} /><button className={saved.includes(name) ? "saved" : ""} aria-label={`${t.products.save} ${name}`} onClick={() => toggleSaved(name)}><Icon name="heart" size={18} /></button></div>
-        <div className="product-info"><h3>{name}</h3><p>{part}</p><div><strong>{price}</strong><button aria-label={`${t.products.add}: ${name}`} onClick={() => setCart((count) => count + 1)}><Icon name="cart" size={18} /></button></div></div>
+    <section className={`${shell} flex flex-col gap-6 py-12 max-[700px]:py-9`} id="products">
+      <div className="flex flex-col gap-2">
+        <p className="text-[10px] font-black tracking-[.16em] text-brand uppercase">{t.products.kicker}</p>
+        <div className="grid grid-cols-[auto_1fr_auto] items-center gap-5 max-[700px]:grid-cols-[1fr_auto]">
+          <h2 className={`${display} text-4xl leading-5 lg:text-[clamp(42px,5vw,72px)] lg:leading-none lg:max-[700px]:text-[40px]`}>{t.products.title}</h2>
+          <div className="h-px bg-white/20 max-[700px]:hidden" />
+        </div>
+      </div>
+      <div className="grid grid-cols-4 gap-4 max-[1000px]:grid-cols-2 max-[700px]:grid-cols-2 max-[700px]:gap-3">{visibleProducts.map(([name, part, price, pos], i) => <article className="min-w-0 overflow-hidden rounded-sm border border-white/20 bg-[#090a0a]" key={name}>
+        <div className="relative h-60 overflow-hidden max-[700px]:h-[155px]"><Image className="object-cover" src={i % 2 ? "/images/performance-parts.png" : "/images/hero-car.png"} alt={name} fill sizes="(max-width: 700px) 50vw, 25vw" style={{ objectPosition: pos }} /><button className={`absolute top-3 left-3 grid size-9 cursor-pointer place-items-center rounded-full border border-white/25 bg-black/50 backdrop-blur max-[700px]:top-2 max-[700px]:left-2 max-[700px]:size-8 ${saved.includes(name) ? "text-brand" : "text-white"}`} aria-label={`${t.products.save} ${name}`} onClick={() => toggleSaved(name)}><Heart className={saved.includes(name) ? "fill-current" : ""} size={17} /></button></div>
+        <div className="flex flex-col gap-4 p-4 max-[700px]:gap-3 max-[700px]:p-3">
+          <div className="flex flex-col gap-0.5">
+            <h3 className={`${display} truncate text-lg max-[700px]:text-[15px]`}>{name}</h3>
+            <p className="truncate text-[10px] uppercase text-white/60 max-[700px]:text-[8px]">{part}</p>
+          </div>
+          <div className="flex items-center justify-between">
+            <strong className="text-lg max-[700px]:text-[15px]">{price}</strong>
+            <button className="grid size-9 cursor-pointer place-items-center rounded-sm bg-brand text-black max-[700px]:size-8" aria-label={`${t.products.add}: ${name}`} onClick={() => setCart((count) => count + 1)}><ShoppingCart size={17} /></button>
+          </div>
+        </div>
       </article>)}</div>
+      <nav className="hidden items-center justify-center gap-2 pt-2 max-[700px]:flex" aria-label={t.products.title}>
+        <button className="grid size-10 place-items-center rounded-full text-white/70 transition enabled:cursor-pointer enabled:hover:bg-white/10 disabled:text-white/20" type="button" onClick={() => changeProductPage(productPage - 1)} disabled={productPage === 1} aria-label={t.products.previousPage}><ChevronLeft size={19} /></button>
+        {Array.from({ length: totalProductPages }, (_, index) => index + 1).map((page) => <button className={`grid size-11 cursor-pointer place-items-center rounded-full text-sm font-bold transition ${page === productPage ? "bg-brand text-black" : "text-white/70 hover:bg-white/10 hover:text-white"}`} type="button" onClick={() => changeProductPage(page)} aria-label={`${t.products.goToPage} ${page}`} aria-current={page === productPage ? "page" : undefined} key={page}>{page}</button>)}
+        <button className="grid size-10 place-items-center rounded-full text-white/70 transition enabled:cursor-pointer enabled:hover:bg-white/10 disabled:text-white/20" type="button" onClick={() => changeProductPage(productPage + 1)} disabled={productPage === totalProductPages} aria-label={t.products.nextPage}><ChevronRight size={19} /></button>
+      </nav>
     </section>
 
-    <section className="shell build-gallery" id="build-gallery">
-      <div className="build-gallery-head"><div><p className="section-kicker">{t.gallery.kicker}</p><h2>{t.gallery.title}</h2></div><a className="btn ghost" href="#stories">{t.gallery.viewAll} <Icon name="arrow" size={17} /></a></div>
-      <div className="build-gallery-grid">{buildGallery.map((item) => <article className="build-gallery-card" key={item.title}><Image src={item.src} alt={item.title} fill sizes="(max-width: 700px) 50vw, 50vw" /><div className="build-gallery-caption"><div><span>{item.meta}</span><h3>{item.title}</h3></div><a href="#stories">{t.gallery.view}</a></div></article>)}</div>
+    <section className={`${shell} flex flex-col gap-6 py-10 max-[700px]:gap-5 max-[700px]:py-8`} id="build-gallery">
+      <div className="flex items-end justify-between gap-5 max-[700px]:flex-col max-[700px]:items-stretch max-[700px]:gap-5">
+        <div className="flex flex-col gap-2"><p className="text-[10px] font-black tracking-[.16em] text-brand uppercase">{t.gallery.kicker}</p><h2 className={`${display} text-[clamp(44px,5vw,70px)] leading-none max-[700px]:text-[44px]`}>{t.gallery.title}</h2></div>
+        <a className={`${button} border-brand text-brand hover:bg-brand hover:text-black max-[700px]:min-h-12 max-[700px]:w-full max-[700px]:justify-between max-[700px]:px-4 max-[700px]:text-[9px]`} href="#stories">{t.gallery.viewAll}<ArrowRight size={17} /></a>
+      </div>
+      <div className="grid auto-rows-[205px] grid-cols-2 gap-4 min-[1000px]:grid-cols-3 max-[700px]:auto-rows-[235px] max-[700px]:grid-cols-1 max-[700px]:gap-3">{buildGallery.map((item, index) => <article className={`group relative overflow-hidden rounded-sm border border-white/20 ${index < 2 ? "min-[1000px]:row-span-2" : ""}`} key={item.title}><Image className="object-cover transition duration-500 group-hover:scale-[1.025]" src={item.src} alt={item.title} fill sizes="(max-width: 700px) 100vw, (min-width: 1000px) 33vw, 50vw" /><div className="absolute inset-0 bg-gradient-to-t from-black/90 via-transparent to-transparent" /><div className="absolute right-5 bottom-5 left-5 flex items-end justify-between gap-4 max-[700px]:right-4 max-[700px]:bottom-4 max-[700px]:left-4"><div className="flex flex-col gap-1"><span className="text-[9px] font-black tracking-[.12em] text-brand uppercase">{item.meta}</span><h3 className={`${display} text-3xl max-[700px]:text-2xl`}>{item.title}</h3></div><a className="rounded-full bg-white px-4 py-2 text-[9px] font-black text-black uppercase max-[700px]:hidden" href="#stories">{t.gallery.view}</a></div></article>)}</div>
     </section>
 
-    <section className="shell journal" id="journal">
-      <div className="section-kicker">{t.journal.kicker}</div>
-      <div className="journal-head"><h2>{t.journal.titleOne}<br />{t.journal.titleTwo}</h2><p>{t.journal.copyOne}<br />{t.journal.copyTwo}</p><a className="btn ghost" href="#stories">{t.journal.cta} <Icon name="arrow" size={17} /></a></div>
-      <div className="story-grid" id="stories">{stories.map(([tag, title, copy, image, pos]) => <article className="story" key={title}><div className="story-photo"><Image src={image} alt="" fill sizes="(max-width: 700px) 100vw, 33vw" style={{ objectPosition: pos }} /></div><span>{tag}</span><h3>{title}</h3><p>{copy}</p><a href="#journal">{t.journal.readMore} →</a></article>)}</div>
+    <section className={`${shell} flex flex-col gap-7 py-14`} id="journal">
+      <div className="flex flex-col gap-2">
+        <p className="text-[10px] font-black tracking-[.16em] text-brand uppercase">{t.journal.kicker}</p>
+        <div className="grid grid-cols-[1fr_auto_auto] items-end gap-8 max-[700px]:flex max-[700px]:flex-col max-[700px]:items-start max-[700px]:gap-5"><h2 className={`${display} text-[clamp(46px,6vw,82px)] leading-[.9] max-[700px]:text-[40px]`}>{t.journal.titleOne}<br />{t.journal.titleTwo}</h2><p className="text-xs leading-5 text-white/60 max-[1000px]:hidden">{t.journal.copyOne}<br />{t.journal.copyTwo}</p><a className={`${button} border-brand text-brand hover:bg-brand hover:text-black`} href="#stories">{t.journal.cta}<ArrowRight size={17} /></a></div>
+      </div>
+      <div className="grid grid-cols-3 divide-x divide-white/15 max-[700px]:grid-cols-1 max-[700px]:divide-none max-[700px]:gap-9" id="stories">{stories.map(([tag, title, copy, image, pos]) => <article className="flex flex-col gap-4 px-4 first:pl-0 last:pr-0 max-[700px]:px-0" key={title}><div className="relative h-60 overflow-hidden max-[700px]:h-[225px]"><Image className="object-cover" src={image} alt="" fill sizes="(max-width: 700px) 100vw, 33vw" style={{ objectPosition: pos }} /></div><div className="flex flex-col gap-4"><div className="flex flex-col gap-1"><span className="text-[9px] font-black tracking-[.12em] text-brand uppercase">{tag}</span><h3 className={`${display} text-2xl`}>{title}</h3></div><p className="text-xs text-white/60">{copy}</p><a className="inline-flex text-[10px] font-bold text-brand" href="#journal">{t.journal.readMore} →</a></div></article>)}</div>
     </section>
 
-    <section className="newsletter" id="about">
-      <Image src="/images/track-banner.png" alt="Performance coupe driving on a wet racetrack" fill sizes="100vw" /><div className="newsletter-shade" />
-      <div className="shell newsletter-content"><div><span>{t.newsletter.kicker}</span><h2>{t.newsletter.titleOne}<br />{t.newsletter.titleTwo}</h2></div>{subscribed ? <p className="success">{t.newsletter.success}</p> : <form onSubmit={(event) => { event.preventDefault(); setSubscribed(true); }}><label className="sr-only" htmlFor="email">{t.newsletter.emailLabel}</label><input id="email" type="email" placeholder={t.newsletter.emailPlaceholder} required /><button type="submit">{t.newsletter.submit}</button></form>}</div>
+    <section className="relative flex min-h-75 items-center overflow-hidden border-y border-white/15 max-[700px]:min-h-[350px] max-[700px]:items-end max-[700px]:pb-8" id="about">
+      <Image className="object-cover max-[700px]:object-[72%_center]" src="/images/track-banner.png" alt="Performance coupe driving on a wet racetrack" fill sizes="100vw" /><div className="absolute inset-0 bg-[linear-gradient(90deg,rgba(2,3,3,.95),rgba(2,3,3,.28))] max-[700px]:bg-[linear-gradient(0deg,rgba(2,3,3,.98)_10%,rgba(2,3,3,.65)_75%,rgba(2,3,3,.2))]" />
+      <div className={`${shell} relative z-10 grid grid-cols-[1fr_auto] items-end gap-8 max-[700px]:grid-cols-1`}><div className="flex flex-col gap-2"><span className="text-[10px] font-black tracking-[.15em] text-brand uppercase">{t.newsletter.kicker}</span><h2 className={`${display} text-[clamp(38px,5vw,64px)] leading-none max-[700px]:text-[32px]`}>{t.newsletter.titleOne}<br />{t.newsletter.titleTwo}</h2></div>{subscribed ? <p className="text-sm text-brand">{t.newsletter.success}</p> : <form className="flex h-12" onSubmit={(event) => { event.preventDefault(); setSubscribed(true); }}><label className="sr-only" htmlFor="email">{t.newsletter.emailLabel}</label><input className="min-w-64 border border-white/30 bg-black/55 px-4 text-xs outline-none focus:border-brand max-[700px]:min-w-0 max-[700px]:flex-1" id="email" type="email" placeholder={t.newsletter.emailPlaceholder} required /><button className="w-36 cursor-pointer bg-brand text-[10px] font-black text-black uppercase max-[700px]:w-30" type="submit">{t.newsletter.submit}</button></form>}</div>
     </section>
 
-    <footer className="footer shell">
-      <div className="footer-brand"><Logo /><p>{t.footer.motto}</p></div>
-      <div><h4>{t.footer.shop}</h4><a href="#products">{t.footer.allProducts}</a><a href="#shop">{t.footer.aero}</a><a href="#shop">{t.footer.performance}</a><a href="#shop">{t.footer.interior}</a></div>
-      <div><h4>{t.footer.company}</h4><a href="#about">{t.footer.about}</a><a href="mailto:hello@basementperformance.com">{t.footer.contact}</a><a href="#about">{t.footer.shipping}</a><a href="#about">{t.footer.returns}</a></div>
-      <div><h4>{t.footer.follow}</h4><div className="socials"><a href="#top" aria-label="Instagram">IG</a><a href="#top" aria-label="YouTube">YT</a><a href="#top" aria-label="TikTok">TK</a></div></div>
-      <p className="footer-callout">{t.footer.callout.map((line) => <span key={line}>{line}<br /></span>)}</p>
-      <div className="legal"><span>{t.footer.copyright}</span><span>{t.footer.terms} &nbsp; {t.footer.privacy} &nbsp; {t.footer.contact}</span></div>
+    <footer className={`${shell} grid grid-cols-[1.5fr_repeat(3,1fr)_1fr] gap-10 py-10 text-[10px] max-[1000px]:grid-cols-[1.5fr_repeat(3,1fr)] max-[700px]:grid-cols-2 max-[700px]:gap-8`}>
+      <div className="flex flex-col gap-4 max-[700px]:col-span-full"><Logo /><p className="text-white/45">{t.footer.motto}</p></div>
+      {[[t.footer.shop, [t.footer.allProducts, t.footer.aero, t.footer.performance, t.footer.interior]], [t.footer.company, [t.footer.about, t.footer.contact, t.footer.shipping, t.footer.returns]]].map(([heading, links]) => <div className="flex flex-col gap-2.5" key={heading as string}><h4 className="font-black uppercase">{heading}</h4><div className="flex flex-col gap-1.5">{(links as readonly string[]).map((link) => <a className="text-white/65 hover:text-brand" href="#top" key={link}>{link}</a>)}</div></div>)}
+      <div className="flex flex-col gap-2"><h4 className="font-black uppercase">{t.footer.follow}</h4><div className="flex gap-2.5"><a className="grid size-8.5 place-items-center border border-white/25" href="#top" aria-label="Instagram"><Camera size={16} /></a><a className="grid size-8.5 place-items-center border border-white/25" href="#top" aria-label="YouTube"><Play size={17} /></a><a className="grid size-8.5 place-items-center border border-white/25" href="#top" aria-label="TikTok"><Music2 size={16} /></a></div></div>
+      <p className="border-l border-white/35 pl-7 text-[11px] leading-5 font-black tracking-[.2em] text-brand uppercase max-[1000px]:hidden">{t.footer.callout.map((line) => <span key={line}>{line}<br /></span>)}</p>
+      <div className="col-span-full flex justify-between border-t border-white/15 pt-5 text-white/40 max-[700px]:flex-col max-[700px]:gap-3"><span>{t.footer.copyright}</span><span>{t.footer.terms} &nbsp; {t.footer.privacy} &nbsp; {t.footer.contact}</span></div>
     </footer>
   </main>;
 }
