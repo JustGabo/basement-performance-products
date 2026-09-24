@@ -1,0 +1,28 @@
+import { MapPin, Plus, Trash2 } from "lucide-react";
+import { redirect } from "next/navigation";
+import { addAddress, deleteAddress } from "@/app/account/actions";
+import { createClient } from "@/lib/supabase/server";
+
+const fieldClass = "h-12 w-full border border-foreground/18 bg-ink px-3 text-sm outline-none transition placeholder:text-foreground/30 focus:border-brand focus:ring-3 focus:ring-brand/10";
+const labelClass = "flex flex-col gap-2 text-[10px] font-black tracking-[.06em] uppercase";
+type Address = { id: string; label: string | null; recipient_name: string; company: string | null; line_1: string; line_2: string | null; city: string; state_region: string | null; postal_code: string | null; country_code: string; phone: string | null; is_default_shipping: boolean; is_default_billing: boolean };
+
+export default async function AddressesPage() {
+  const supabase = await createClient();
+  const { data: claimsData } = await supabase.auth.getClaims();
+  const userId = claimsData?.claims?.sub;
+  if (!userId) redirect("/sign-in");
+  const { data } = await supabase.from("addresses").select("*").eq("user_id", userId).order("created_at", { ascending: false });
+  const addresses = (data ?? []) as Address[];
+
+  return <section className="flex flex-col gap-8">
+    <div className="flex flex-col gap-2"><p className="text-[10px] font-black tracking-[.18em] text-brand uppercase">Delivery details</p><h1 className="font-display text-[clamp(48px,6vw,78px)] leading-[.9] font-bold tracking-[-.035em] uppercase">Addresses</h1><p className="max-w-2xl text-sm leading-6 text-foreground/55">Save destinations for faster checkout in the Dominican Republic or abroad.</p></div>
+    {addresses.length > 0 && <div className="grid grid-cols-2 gap-4 max-[650px]:grid-cols-1">{addresses.map((address) => <article className="flex min-h-52 flex-col justify-between gap-6 border border-foreground/15 bg-panel p-5" key={address.id}><div className="flex items-start justify-between gap-4"><span className="grid size-10 place-items-center border border-brand/35 text-brand"><MapPin size={19} /></span><div className="flex flex-wrap justify-end gap-2">{address.is_default_shipping && <span className="bg-brand/12 px-2 py-1 text-[8px] font-black text-brand uppercase">Shipping</span>}{address.is_default_billing && <span className="bg-brand/12 px-2 py-1 text-[8px] font-black text-brand uppercase">Billing</span>}</div></div><div className="flex flex-col gap-1 text-sm"><h2 className="font-display text-2xl font-bold uppercase">{address.label || "Address"}</h2><strong>{address.recipient_name}</strong>{address.company && <span className="text-foreground/55">{address.company}</span>}<span className="text-foreground/55">{address.line_1}{address.line_2 ? `, ${address.line_2}` : ""}</span><span className="text-foreground/55">{[address.city, address.state_region, address.postal_code].filter(Boolean).join(", ")} · {address.country_code}</span>{address.phone && <span className="text-foreground/55">{address.phone}</span>}</div><form action={deleteAddress}><input name="addressId" type="hidden" value={address.id} /><button className="flex cursor-pointer items-center gap-2 text-[9px] font-black text-foreground/45 uppercase transition hover:text-red-500" type="submit"><Trash2 size={15} />Remove</button></form></article>)}</div>}
+    <form action={addAddress} className="flex flex-col gap-6 border border-foreground/15 bg-panel p-6 max-[600px]:p-4">
+      <div className="flex items-center gap-3"><span className="grid size-10 place-items-center bg-brand text-black"><Plus size={19} /></span><div><h2 className="font-display text-2xl font-bold uppercase">Add an address</h2><p className="text-xs text-foreground/50">Fields marked with * are required.</p></div></div>
+      <div className="grid grid-cols-2 gap-4 max-[600px]:grid-cols-1"><label className={labelClass}>Label<input className={fieldClass} name="label" placeholder="Home" /></label><label className={labelClass}>Recipient name *<input className={fieldClass} name="recipientName" required /></label><label className={labelClass}>Company<input className={fieldClass} name="company" /></label><label className={labelClass}>Phone<input className={fieldClass} name="phone" type="tel" /></label><label className={`${labelClass} col-span-2 max-[600px]:col-span-1`}>Address line 1 *<input className={fieldClass} name="line1" required /></label><label className={`${labelClass} col-span-2 max-[600px]:col-span-1`}>Address line 2<input className={fieldClass} name="line2" /></label><label className={labelClass}>City *<input className={fieldClass} name="city" required /></label><label className={labelClass}>State / province<input className={fieldClass} name="stateRegion" /></label><label className={labelClass}>Postal code<input className={fieldClass} name="postalCode" /></label><label className={labelClass}>Country code *<input className={`${fieldClass} uppercase`} defaultValue="DO" maxLength={2} minLength={2} name="countryCode" required /></label></div>
+      <div className="flex flex-wrap gap-5"><label className="flex items-center gap-2 text-xs text-foreground/65"><input className="size-4 accent-brand" name="defaultShipping" type="checkbox" />Default shipping address</label><label className="flex items-center gap-2 text-xs text-foreground/65"><input className="size-4 accent-brand" name="defaultBilling" type="checkbox" />Default billing address</label></div>
+      <button className="flex min-h-12 w-fit cursor-pointer items-center gap-5 bg-brand px-6 text-[10px] font-black text-black uppercase" type="submit">Save address<Plus size={17} /></button>
+    </form>
+  </section>;
+}
