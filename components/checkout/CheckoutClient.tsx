@@ -4,13 +4,13 @@ import Image from "next/image";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { INSTANCE_LOADING_STATE, PayPalOneTimePaymentButton, PayPalProvider, usePayPal } from "@paypal/react-paypal-js/sdk-v6";
-import { ArrowLeft, Check, ChevronDown, LockKeyhole, PackageCheck, ShieldCheck, ShoppingBag, Truck } from "lucide-react";
+import { ArrowLeft, ArrowRight, Check, ChevronDown, LockKeyhole, PackageCheck, ShieldCheck, ShoppingBag, Truck } from "lucide-react";
 import { useEffect, useMemo, useState } from "react";
 import { toast } from "sonner";
 import { useCart } from "@/components/cart/CartProvider";
 import { BrandLogo } from "@/components/site/BrandLogo";
 import { ThemeToggle } from "@/components/theme/ThemeToggle";
-import { formatPrice } from "@/lib/commerce";
+import { formatCartPrice, formatProductPrice } from "@/lib/commerce";
 
 type Locale = "en" | "es";
 
@@ -38,6 +38,7 @@ const copy = {
     sandboxCopy: "No real money will be charged. Use a PayPal sandbox buyer account.", required: "Complete your delivery information to enable payment.",
     createError: "We could not create your PayPal order.", captureError: "Payment could not be completed.", processing: "Securing your order...",
     secure: "Encrypted PayPal checkout", inventory: "Inventory checked before payment", account: "Order saved to your account",
+    shopify: "Shopify secure checkout", shopifyCopy: "Shipping, taxes and the final USD charge are confirmed securely in Shopify.", shopifyAction: "Continue to secure checkout",
   },
   es: {
     back: "Volver al carrito", kicker: "Pago seguro", title: "Termina tu proyecto.", contact: "Contacto",
@@ -49,6 +50,7 @@ const copy = {
     sandboxCopy: "No se cobrará dinero real. Usa una cuenta compradora de PayPal Sandbox.", required: "Completa la información de entrega para habilitar el pago.",
     createError: "No pudimos crear tu orden de PayPal.", captureError: "No se pudo completar el pago.", processing: "Asegurando tu orden...",
     secure: "Pago cifrado por PayPal", inventory: "Inventario validado antes del pago", account: "Orden guardada en tu cuenta",
+    shopify: "Checkout seguro de Shopify", shopifyCopy: "El envío, los impuestos y el cargo final en USD se confirman de forma segura en Shopify.", shopifyAction: "Continuar al pago seguro",
   },
 } as const;
 
@@ -84,9 +86,9 @@ function PayPalPaymentButton({ disabled, createOrder, captureOrder, onCancel, on
   /></div>;
 }
 
-export function CheckoutClient({ clientId, environment, prefill }: { clientId: string; environment: "sandbox" | "production"; prefill: CheckoutPrefill }) {
+export function CheckoutClient({ clientId, environment, prefill, commerceProvider }: { clientId: string; environment: "sandbox" | "production"; prefill: CheckoutPrefill; commerceProvider: "shopify" | "paypal" }) {
   const router = useRouter();
-  const { items, subtotalCents, hydrated, clearCart } = useCart();
+  const { items, hydrated, clearCart } = useCart();
   const [locale, setLocale] = useState<Locale>("en");
   const [form, setForm] = useState(prefill);
   const [processing, setProcessing] = useState(false);
@@ -104,9 +106,31 @@ export function CheckoutClient({ clientId, environment, prefill }: { clientId: s
     form.firstName.trim() && form.lastName.trim() && form.phone.trim() && form.line1.trim()
     && form.city.trim() && form.countryCode.trim().length === 2,
   ), [form]);
-  const disabled = !hydrated || !items.length || !complete || processing || !clientId;
+  const disabled = !hydrated || !items.length || !complete || processing
+    || (commerceProvider === "paypal" && !clientId);
 
   const update = (key: keyof CheckoutPrefill, value: string) => setForm((current) => ({ ...current, [key]: value }));
+
+  const startShopifyCheckout = async () => {
+    setProcessing(true);
+    try {
+      const response = await fetch("/api/shopify/checkout", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          items: items.map(({ product, quantity }) => ({ merchandiseId: product.merchandiseId, quantity })),
+          buyer: form,
+        }),
+      });
+      const data = await response.json() as { checkoutUrl?: string; error?: string };
+      if (!response.ok || !data.checkoutUrl) throw new Error(data.error ?? "Shopify checkout could not be created.");
+      clearCart();
+      window.location.assign(data.checkoutUrl);
+    } catch (error) {
+      toast.error(error instanceof Error ? error.message : "Shopify checkout could not be created.");
+      setProcessing(false);
+    }
+  };
 
   const createOrder = async () => {
     setProcessing(true);
@@ -181,9 +205,9 @@ export function CheckoutClient({ clientId, environment, prefill }: { clientId: s
 
           <section className="flex flex-col gap-5 border border-foreground/15 bg-panel p-6 max-[600px]:p-4">
             <div className="flex items-center gap-3"><span className="grid size-9 place-items-center border border-brand/35 text-brand">03</span><h2 className="font-display text-2xl font-bold uppercase">{t.payment}</h2></div>
-            <div className="flex gap-3 border-l-2 border-brand bg-brand/8 p-4"><LockKeyhole className="shrink-0 text-brand" size={19} /><div className="flex flex-col gap-1"><strong className="text-[10px] font-black tracking-[.08em] uppercase">{t.sandbox}</strong><p className="text-xs leading-5 text-foreground/55">{t.sandboxCopy}</p></div></div>
+            <div className="flex gap-3 border-l-2 border-brand bg-brand/8 p-4"><LockKeyhole className="shrink-0 text-brand" size={19} /><div className="flex flex-col gap-1"><strong className="text-[10px] font-black tracking-[.08em] uppercase">{commerceProvider === "shopify" ? t.shopify : t.sandbox}</strong><p className="text-xs leading-5 text-foreground/55">{commerceProvider === "shopify" ? t.shopifyCopy : t.sandboxCopy}</p></div></div>
             {!complete && <p className="text-xs text-brand">{t.required}</p>}
-            {!clientId ? <p className="border border-red-500/40 bg-red-500/10 p-4 text-xs text-red-400">NEXT_PUBLIC_PAYPAL_CLIENT_ID is missing.</p> : <PayPalProvider clientId={clientId} environment={environment} components={["paypal-payments"]} pageType="checkout" locale={locale === "es" ? "es-ES" : "en-US"}>
+            {commerceProvider === "shopify" ? <button className="flex min-h-14 items-center justify-between gap-4 bg-brand px-5 text-[10px] font-black tracking-[.08em] text-black uppercase transition hover:brightness-105 disabled:cursor-not-allowed disabled:opacity-45" type="button" disabled={disabled} onClick={() => void startShopifyCheckout()}>{t.shopifyAction}<ArrowRight size={19} /></button> : !clientId ? <p className="border border-red-500/40 bg-red-500/10 p-4 text-xs text-red-400">NEXT_PUBLIC_PAYPAL_CLIENT_ID is missing.</p> : <PayPalProvider clientId={clientId} environment={environment} components={["paypal-payments"]} pageType="checkout" locale={locale === "es" ? "es-ES" : "en-US"}>
               <PayPalPaymentButton
                 disabled={disabled}
                 createOrder={createOrder}
@@ -200,9 +224,9 @@ export function CheckoutClient({ clientId, environment, prefill }: { clientId: s
 
         <aside className="sticky top-24 flex flex-col gap-5 border border-foreground/15 bg-panel p-6 max-[1000px]:static max-[600px]:p-4">
           <div className="flex items-center justify-between gap-5"><h2 className="font-display text-3xl font-bold uppercase">{t.summary}</h2><span className="text-[10px] font-black text-brand">{String(items.reduce((total, item) => total + item.quantity, 0)).padStart(2, "0")}</span></div>
-          <div className="flex max-h-85 flex-col gap-4 overflow-y-auto pr-1">{items.map(({ product, quantity }) => <article className="grid grid-cols-[72px_minmax(0,1fr)_auto] items-center gap-3" key={product.id}><div className="relative h-18 overflow-hidden bg-ink"><Image className="object-cover" src={product.image} alt={product.name} fill sizes="72px" style={{ objectPosition: product.objectPosition }} /><span className="absolute top-1 right-1 grid size-5 place-items-center rounded-full bg-brand text-[8px] font-black text-black">{quantity}</span></div><div className="min-w-0"><h3 className="font-display truncate text-base font-bold uppercase">{product.name}</h3><p className="truncate text-[8px] text-foreground/45 uppercase">{product.part}</p></div><strong className="text-xs">{formatPrice(product.priceCents * quantity)}</strong></article>)}</div>
-          <div className="flex flex-col gap-3 border-t border-foreground/12 pt-5 text-xs"><div className="flex justify-between gap-5 text-foreground/60"><span>Subtotal</span><strong className="text-foreground">{formatPrice(subtotalCents)}</strong></div><div className="flex justify-between gap-5 text-foreground/60"><span>{t.shipping}</span><span className="max-w-50 text-right text-[10px] text-brand">{t.free}</span></div><div className="flex items-end justify-between gap-5 border-t border-foreground/12 pt-4"><strong className="font-display text-2xl uppercase">{t.total}</strong><strong className="text-2xl text-brand">{formatPrice(subtotalCents)}</strong></div></div>
-          <div className="flex items-center gap-3 border-t border-foreground/12 pt-4 text-[9px] text-foreground/45"><Truck className="text-brand" size={17} />USD · PayPal Sandbox</div>
+          <div className="flex max-h-85 flex-col gap-4 overflow-y-auto pr-1">{items.map(({ product, quantity }) => <article className="grid grid-cols-[72px_minmax(0,1fr)_auto] items-center gap-3" key={product.id}><div className="relative h-18 overflow-hidden bg-ink"><Image className="object-cover" src={product.image} alt={product.name} fill sizes="72px" style={{ objectPosition: product.objectPosition }} /><span className="absolute top-1 right-1 grid size-5 place-items-center rounded-full bg-brand text-[8px] font-black text-black">{quantity}</span></div><div className="min-w-0"><h3 className="font-display truncate text-base font-bold uppercase">{product.name}</h3><p className="truncate text-[8px] text-foreground/45 uppercase">{product.part}</p></div><strong className="text-xs">{formatProductPrice(product, quantity)}</strong></article>)}</div>
+          <div className="flex flex-col gap-3 border-t border-foreground/12 pt-5 text-xs"><div className="flex justify-between gap-5 text-foreground/60"><span>Subtotal</span><strong className="text-foreground">{formatCartPrice(items)}</strong></div><div className="flex justify-between gap-5 text-foreground/60"><span>{t.shipping}</span><span className="max-w-50 text-right text-[10px] text-brand">{t.free}</span></div><div className="flex items-end justify-between gap-5 border-t border-foreground/12 pt-4"><strong className="font-display text-2xl uppercase">{t.total}</strong><strong className="text-2xl text-brand">{formatCartPrice(items)}</strong></div></div>
+          <div className="flex items-center gap-3 border-t border-foreground/12 pt-4 text-[9px] text-foreground/45"><Truck className="text-brand" size={17} />{commerceProvider === "shopify" ? "DOP estimate · final charge in USD · Shopify" : "USD · PayPal Sandbox"}</div>
         </aside>
       </div>}
     </div>

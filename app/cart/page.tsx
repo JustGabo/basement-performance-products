@@ -7,7 +7,7 @@ import { useEffect, useState } from "react";
 import { useCart } from "@/components/cart/CartProvider";
 import { BrandLogo } from "@/components/site/BrandLogo";
 import { ThemeToggle } from "@/components/theme/ThemeToggle";
-import { formatPrice } from "@/lib/commerce";
+import { formatCartPrice, formatProductPrice } from "@/lib/commerce";
 
 type Locale = "en" | "es";
 
@@ -27,7 +27,7 @@ const copy = {
 } as const;
 
 export default function CartPage() {
-  const { items, subtotalCents, hydrated, updateQuantity, removeItem, clearCart } = useCart();
+  const { items, hydrated, updateQuantity, removeItem, clearCart } = useCart();
   const [locale, setLocale] = useState<Locale>("en");
   const t = copy[locale];
 
@@ -72,15 +72,15 @@ export default function CartPage() {
             </div>
             <div className="flex h-full flex-col items-end justify-between gap-4 max-[700px]:col-span-2 max-[700px]:h-auto max-[700px]:flex-row-reverse max-[700px]:items-center">
               <button className="flex cursor-pointer items-center gap-2 text-[9px] font-bold text-foreground/45 uppercase transition hover:text-brand" type="button" onClick={() => removeItem(product.id)}><Trash2 size={15} />{t.remove}</button>
-              <strong className="text-lg">{formatPrice(product.priceCents * quantity)}</strong>
+              <strong className="text-lg">{formatProductPrice(product, quantity)}</strong>
             </div>
           </article>)}
           <button className="w-fit cursor-pointer text-[9px] font-bold tracking-[.08em] text-foreground/45 uppercase underline underline-offset-4 transition hover:text-brand" type="button" onClick={clearCart}>{t.clear}</button>
         </div>
 
         <aside className="sticky top-24 flex flex-col gap-6 rounded-sm border border-foreground/15 bg-panel p-6 max-[900px]:static">
-          <div className="flex flex-col gap-4 text-xs"><div className="flex justify-between gap-5 text-foreground/65"><span>{t.subtotal}</span><strong className="text-foreground">{formatPrice(subtotalCents)}</strong></div><div className="flex justify-between gap-5 text-foreground/65"><span>{t.shipping}</span><span className="text-right text-[10px] uppercase">{t.calculated}</span></div></div>
-          <div className="flex items-end justify-between gap-5 border-t border-foreground/15 pt-5"><span className="font-display text-2xl font-bold uppercase">{t.total}</span><strong className="text-xl text-brand">{formatPrice(subtotalCents)}</strong></div>
+          <div className="flex flex-col gap-4 text-xs"><div className="flex justify-between gap-5 text-foreground/65"><span>{t.subtotal}</span><strong className="text-foreground">{formatCartPrice(items)}</strong></div><div className="flex justify-between gap-5 text-foreground/65"><span>{t.shipping}</span><span className="text-right text-[10px] uppercase">{t.calculated}</span></div></div>
+          <div className="flex items-end justify-between gap-5 border-t border-foreground/15 pt-5"><span className="font-display text-2xl font-bold uppercase">{t.total}</span><strong className="text-xl text-brand">{formatCartPrice(items)}</strong></div>
           <Link className="flex min-h-13 items-center justify-between bg-brand px-5 text-[10px] font-black tracking-[.06em] text-black uppercase transition hover:bg-[#d99f00]" href="/checkout">{t.checkout}<ArrowRight size={18} /></Link>
           <p className="flex gap-2 text-[10px] leading-4 text-foreground/45"><ShieldCheck className="shrink-0 text-brand" size={17} />{t.secure}</p>
         </aside>

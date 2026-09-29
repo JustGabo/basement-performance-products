@@ -6,18 +6,15 @@ import { ArrowRight, Camera, ChevronLeft, ChevronRight, Heart, Menu, Search, Sho
 import { useEffect, useState } from "react";
 import { useCart } from "@/components/cart/CartProvider";
 import { CartDrawer } from "@/components/cart/CartDrawer";
+import { useFavorites } from "@/components/favorites/useFavorites";
 import { ThemeToggle } from "@/components/theme/ThemeToggle";
-import { formatPrice, type StoreProduct } from "@/lib/commerce";
+import { formatProductPrice, type StoreProduct } from "@/lib/commerce";
+import type { BuildGalleryItem, HeroSlide } from "@/lib/home-content";
 import { translations, type Locale } from "@/app/i18n";
 
 const shell = "mx-auto w-[min(1480px,calc(100%_-_56px))] max-[700px]:w-[calc(100%_-_32px)]";
 const display = "font-display font-bold uppercase";
 const button = "inline-flex min-h-13 items-center justify-center gap-5 border px-7 text-[11px] font-black tracking-[.04em] uppercase transition max-[700px]:min-h-12 max-[700px]:px-5";
-
-const categories = [
-  { key: "aero" as const, image: "/images/category-aero.png" },
-  { key: "bodyKits" as const, image: "/images/category-body-kits.png" },
-];
 
 const stories = [
   ["Build feature", "The perfect street build", "A balance of style, grip and real-world performance.", "/images/hero-car.png", "72% 58%"],
@@ -25,20 +22,15 @@ const stories = [
   ["Customer build", "Track ready. Street legal.", "From a blank canvas to the complete machine.", "/images/track-banner.png", "74% 50%"],
 ];
 
-const gallerySlides = [
-  { src: "/images/gallery-blue-civic.png", alt: "Blue modified Civic displayed with its hood open" },
-  { src: "/images/gallery-white-open.png", alt: "White modified sedan displayed with its hood open" },
-  { src: "/images/gallery-white-closed.png", alt: "White lowered sedan in a covered parking structure" },
-];
-
-const buildGallery = [
-  { src: "/images/build-bmw-front-lip.png", title: "Front Lip", meta: "BMW" },
-  { src: "/images/build-mazda-front-splitter.png", title: "Front Splitter", meta: "Mazda" },
-  { src: "/images/build-toyota-front-side-lips.png", title: "Front & Side Lips", meta: "Toyota" },
-  { src: "/images/build-honda-js-racing-lip.png", title: "Front Lip JS Racing", meta: "Honda" },
-];
-
 const productsPerPage = 8;
+
+function isShopifyCdnImage(src: string) {
+  try {
+    return new URL(src).hostname === "cdn.shopify.com";
+  } catch {
+    return false;
+  }
+}
 
 function Logo() {
   return <a className="[grid-area:logo] flex w-max items-center gap-5 justify-self-center max-[700px]:gap-2.5" href="#top" aria-label="Basement Performance Products home">
@@ -54,17 +46,16 @@ function LocaleSwitch({ locale, label, onChange }: { locale: Locale; label: stri
   </div>;
 }
 
-export function HomePage({ products }: { products: StoreProduct[] }) {
+export function HomePage({ products, heroSlides, buildGallery }: { products: StoreProduct[]; heroSlides: HeroSlide[]; buildGallery: BuildGalleryItem[] }) {
   const { addItem, totalItems } = useCart();
-  const [saved, setSaved] = useState<string[]>([]);
   const [subscribed, setSubscribed] = useState(false);
   const [activeSlide, setActiveSlide] = useState(0);
   const [productPage, setProductPage] = useState(1);
   const [locale, setLocale] = useState<Locale>("en");
+  const { isSaved, toggleFavorite } = useFavorites(locale);
   const t = translations[locale];
   const totalProductPages = Math.max(1, Math.ceil(products.length / productsPerPage));
   const visibleProducts = products.slice((productPage - 1) * productsPerPage, productPage * productsPerPage);
-  const toggleSaved = (name: string) => setSaved((items) => items.includes(name) ? items.filter((item) => item !== name) : [...items, name]);
 
   const changeProductPage = (page: number) => {
     if (page < 1 || page > totalProductPages || page === productPage) return;
@@ -90,9 +81,10 @@ export function HomePage({ products }: { products: StoreProduct[] }) {
   }, []);
 
   useEffect(() => {
-    const timer = window.setInterval(() => setActiveSlide((current) => (current + 1) % gallerySlides.length), 5000);
+    if (heroSlides.length < 2) return;
+    const timer = window.setInterval(() => setActiveSlide((current) => (current + 1) % heroSlides.length), 5000);
     return () => window.clearInterval(timer);
-  }, []);
+  }, [heroSlides.length]);
 
   return <main id="top" className="overflow-hidden bg-ink text-foreground transition-colors">
     <header className="fixed top-0 left-0 z-30 grid h-21 w-full grid-cols-[1fr_auto_1fr] [grid-template-areas:'nav_logo_tools'] items-center gap-9 border-b border-foreground/12 bg-ink/88 px-[max(28px,calc((100vw-1480px)/2))] shadow-xl backdrop-blur-xl max-[1000px]:[grid-template-areas:'empty_logo_tools'] max-[700px]:h-18 max-[700px]:px-5">
@@ -102,10 +94,10 @@ export function HomePage({ products }: { products: StoreProduct[] }) {
       <div className="[grid-area:tools] hidden items-center justify-self-end gap-2 max-[1000px]:flex"><ThemeToggle compact /><CartDrawer locale={locale} /><details className="relative"><summary className="flex cursor-pointer list-none p-1" aria-label={t.header.menu}><Menu size={24} /></summary><div className="absolute top-10 right-0 grid min-w-44 gap-4 border border-foreground/15 bg-panel/95 p-5 text-xs uppercase shadow-2xl"><LocaleSwitch locale={locale} label={t.language} onChange={changeLocale} /><a href="#shop">{t.nav.shop}</a><a href="#build-gallery">{t.nav.builds}</a><a href="#journal">{t.nav.journal}</a><Link href="/about">{t.nav.about}</Link><Link href="/account">{t.header.contact}</Link><Link href="/cart">{totalItems} {t.header.cart}</Link></div></details></div>
     </header>
 
-    <section className="relative min-h-175 overflow-hidden border-b border-foreground/10 text-white max-[700px]:min-h-147.5" aria-label={t.hero.label}>
-      <div className="absolute inset-0">{gallerySlides.map((slide, index) => <div className={`absolute inset-0 transition-opacity duration-700 ${index === activeSlide ? "opacity-100" : "opacity-0"}`} aria-hidden={index !== activeSlide} key={slide.src}><Image className="object-cover object-center max-[700px]:object-[64%_center]" src={slide.src} alt={index === activeSlide ? slide.alt : ""} fill priority={index === 0} sizes="100vw" /></div>)}</div>
+    <section className="relative min-h-dvh overflow-hidden border-b border-foreground/10 text-white" aria-label={t.hero.label}>
+      <div className="absolute inset-0">{heroSlides.map((slide, index) => <div className={`absolute inset-0 transition-opacity duration-700 ${index === activeSlide ? "opacity-100" : "opacity-0"}`} aria-hidden={index !== activeSlide} key={slide.id}><Image className="object-cover max-[700px]:object-[64%_center]" src={slide.src} alt={index === activeSlide ? slide.alt : ""} fill preload={index === 0} sizes="100vw" style={{ objectPosition: slide.objectPosition }} unoptimized={isShopifyCdnImage(slide.src)} /></div>)}</div>
       <div className="absolute inset-0 bg-[linear-gradient(90deg,rgba(2,3,3,.96)_0%,rgba(2,3,3,.7)_30%,rgba(2,3,3,.08)_68%)] max-[700px]:bg-[linear-gradient(0deg,rgba(2,3,3,.98)_6%,rgba(2,3,3,.62)_66%,rgba(2,3,3,.18))]" />
-      <div className={`${shell} relative z-10 flex min-h-175 items-center pt-21 max-[700px]:min-h-147.5 max-[700px]:items-end max-[700px]:pt-18 max-[700px]:pb-16`}>
+      <div className={`${shell} relative z-10 flex min-h-dvh items-center pt-21 max-[700px]:items-end max-[700px]:pt-18 max-[700px]:pb-16`}>
         <div className="flex flex-col gap-7">
           <div className="flex flex-col gap-5">
             <p className="text-[11px] font-black tracking-[.18em] text-brand uppercase">{t.hero.eyebrow}</p>
@@ -115,12 +107,11 @@ export function HomePage({ products }: { products: StoreProduct[] }) {
           <div className="flex gap-3"><a className={`${button} border-brand bg-brand text-black hover:bg-transparent hover:text-brand`} href="#shop">{t.hero.primary}<ArrowRight size={17} /></a><a className={`${button} border-brand text-brand hover:bg-brand hover:text-black`} href="#build-gallery">{t.hero.secondary}</a></div>
         </div>
       </div>
-      <div className="absolute right-[max(28px,calc((100vw-1480px)/2))] bottom-7 z-10 flex gap-3 max-[700px]:hidden" aria-label={t.hero.controls}>{gallerySlides.map((_, index) => <button className={`cursor-pointer border-0 border-b-2 bg-transparent px-1 pb-2 text-[10px] font-bold ${index === activeSlide ? "border-brand text-white" : "border-white/20 text-white/55"}`} onClick={() => setActiveSlide(index)} aria-label={`${t.hero.showImage} ${index + 1}`} aria-current={index === activeSlide ? "true" : undefined} key={index}>{String(index + 1).padStart(2, "0")}</button>)}</div>
     </section>
 
-    <section className={`${shell} grid grid-cols-2 gap-5 py-6 max-[700px]:w-full max-[700px]:grid-cols-1 max-[700px]:px-4`} id="shop" aria-label={t.categories.label}>
+    {/* <section className={`${shell} grid grid-cols-2 gap-5 py-6 max-[700px]:w-full max-[700px]:grid-cols-1 max-[700px]:px-4`} id="shop" aria-label={t.categories.label}>
       {categories.map(({ key, image }) => { const category = t.categories[key]; return <a href="#products" className="group relative h-80 overflow-hidden rounded-sm border border-foreground/20 text-white max-[700px]:h-75" key={key}><Image className="object-cover transition duration-500 group-hover:scale-[1.03]" src={image} alt={category.name} fill sizes="(max-width: 700px) 100vw, 50vw" /><div className="absolute inset-0 bg-gradient-to-t from-black via-black/15 to-transparent" /><div className="absolute right-5 bottom-5 left-5 flex flex-col gap-1"><h3 className={`${display} text-3xl`}>{category.name}</h3><p className="text-xs text-white/70">{category.copy}</p></div><ArrowRight className="absolute right-5 bottom-6 text-brand" size={20} /></a>; })}
-    </section>
+    </section> */}
 
     <section className={`${shell} flex scroll-mt-24 flex-col gap-6 py-12 max-[700px]:scroll-mt-20 max-[700px]:py-9`} id="products">
       <div className="flex flex-col gap-2">
@@ -131,14 +122,14 @@ export function HomePage({ products }: { products: StoreProduct[] }) {
         </div>
       </div>
       <div className="grid grid-cols-4 gap-4 max-[1000px]:grid-cols-2 max-[700px]:grid-cols-2 max-[700px]:gap-3">{visibleProducts.map((product) => <article className="min-w-0 overflow-hidden rounded-sm border border-foreground/20 bg-panel" key={product.id}>
-        <div className="relative h-60 overflow-hidden max-[700px]:h-[155px]"><Link className="absolute inset-0" href={`/products/${product.slug}`} aria-label={product.name}><Image className="object-cover transition duration-500 hover:scale-[1.025]" src={product.image} alt={product.name} fill sizes="(max-width: 700px) 50vw, 25vw" style={{ objectPosition: product.objectPosition }} /></Link><button className={`absolute top-3 left-3 z-10 grid size-9 cursor-pointer place-items-center rounded-full border border-white/25 bg-black/50 backdrop-blur max-[700px]:top-2 max-[700px]:left-2 max-[700px]:size-8 ${saved.includes(product.name) ? "text-brand" : "text-white"}`} aria-label={`${t.products.save} ${product.name}`} onClick={() => toggleSaved(product.name)}><Heart className={saved.includes(product.name) ? "fill-current" : ""} size={17} /></button></div>
+        <div className="relative h-60 overflow-hidden max-[700px]:h-[155px]"><Link className="absolute inset-0" href={`/products/${product.slug}`} aria-label={product.name}><Image className="object-cover transition duration-500 hover:scale-[1.025]" src={product.image} alt={product.name} fill sizes="(max-width: 700px) 50vw, 25vw" style={{ objectPosition: product.objectPosition }} unoptimized={isShopifyCdnImage(product.image)} /></Link><button className={`absolute top-3 left-3 z-10 grid size-9 cursor-pointer place-items-center rounded-full border border-white/25 bg-black/50 backdrop-blur max-[700px]:top-2 max-[700px]:left-2 max-[700px]:size-8 ${isSaved(product.id) ? "text-brand" : "text-white"}`} aria-label={`${t.products.save} ${product.name}`} onClick={() => void toggleFavorite(product)}><Heart className={isSaved(product.id) ? "fill-current" : ""} size={17} /></button></div>
         <div className="flex flex-col gap-4 p-4 max-[700px]:gap-3 max-[700px]:p-3">
           <div className="flex flex-col gap-0.5">
             <h3 className={`${display} truncate text-lg max-[700px]:text-[15px]`}><Link className="hover:text-brand" href={`/products/${product.slug}`}>{product.name}</Link></h3>
             <p className="truncate text-[10px] uppercase text-foreground/60 max-[700px]:text-[8px]">{product.part}</p>
           </div>
           <div className="flex items-center justify-between">
-            <strong className="text-lg max-[700px]:text-[15px]">{formatPrice(product.priceCents)}</strong>
+            <strong className="text-lg max-[700px]:text-[15px]">{formatProductPrice(product)}</strong>
             <button className="grid size-9 cursor-pointer place-items-center rounded-sm bg-brand text-black max-[700px]:size-8" aria-label={`${t.products.add}: ${product.name}`} onClick={() => addItem(product)}><ShoppingCart size={17} /></button>
           </div>
         </div>
@@ -155,7 +146,7 @@ export function HomePage({ products }: { products: StoreProduct[] }) {
         <div className="flex flex-col gap-2"><p className="text-[10px] font-black tracking-[.16em] text-brand uppercase">{t.gallery.kicker}</p><h2 className={`${display} text-[clamp(44px,5vw,70px)] leading-none max-[700px]:text-[44px]`}>{t.gallery.title}</h2></div>
         <a className={`${button} border-brand text-brand hover:bg-brand hover:text-black max-[700px]:min-h-12 max-[700px]:w-full max-[700px]:justify-between max-[700px]:px-4 max-[700px]:text-[9px]`} href="#stories">{t.gallery.viewAll}<ArrowRight size={17} /></a>
       </div>
-      <div className="grid auto-rows-[205px] grid-cols-2 gap-4 min-[1000px]:grid-cols-3 max-[700px]:auto-rows-[235px] max-[700px]:grid-cols-1 max-[700px]:gap-3">{buildGallery.map((item, index) => <article className={`group relative overflow-hidden rounded-sm border border-foreground/20 text-white ${index < 2 ? "min-[1000px]:row-span-2" : ""}`} key={item.title}><Image className="object-cover transition duration-500 group-hover:scale-[1.025]" src={item.src} alt={item.title} fill sizes="(max-width: 700px) 100vw, (min-width: 1000px) 33vw, 50vw" /><div className="absolute inset-0 bg-gradient-to-t from-black/90 via-transparent to-transparent" /><div className="absolute right-5 bottom-5 left-5 flex items-end justify-between gap-4 max-[700px]:right-4 max-[700px]:bottom-4 max-[700px]:left-4"><div className="flex flex-col gap-1"><span className="text-[9px] font-black tracking-[.12em] text-brand uppercase">{item.meta}</span><h3 className={`${display} text-3xl max-[700px]:text-2xl`}>{item.title}</h3></div><a className="rounded-full bg-white px-4 py-2 text-[9px] font-black text-black uppercase max-[700px]:hidden" href="#stories">{t.gallery.view}</a></div></article>)}</div>
+      <div className="grid auto-rows-[205px] grid-cols-2 gap-4 min-[1000px]:grid-cols-3 max-[700px]:auto-rows-[235px] max-[700px]:grid-cols-1 max-[700px]:gap-3">{buildGallery.map((item, index) => <article className={`group relative overflow-hidden rounded-sm border border-foreground/20 text-white ${index < 2 ? "min-[1000px]:row-span-2" : ""}`} key={item.id}><Image className="object-cover transition duration-500 group-hover:scale-[1.025]" src={item.src} alt={`${item.meta} ${item.title}`} fill sizes="(max-width: 700px) 100vw, (min-width: 1000px) 33vw, 50vw" unoptimized={isShopifyCdnImage(item.src)} /><div className="absolute inset-0 bg-gradient-to-t from-black/90 via-transparent to-transparent" /><div className="absolute right-5 bottom-5 left-5 flex items-end justify-between gap-4 max-[700px]:right-4 max-[700px]:bottom-4 max-[700px]:left-4"><div className="flex flex-col gap-1"><span className="text-[9px] font-black tracking-[.12em] text-brand uppercase">{item.meta}</span><h3 className={`${display} text-3xl max-[700px]:text-2xl`}>{item.title}</h3></div><a className="rounded-full bg-white px-4 py-2 text-[9px] font-black text-black uppercase max-[700px]:hidden" href={item.href}>{t.gallery.view}</a></div></article>)}</div>
     </section>
 
     <section className={`${shell} flex flex-col gap-7 py-14`} id="journal">

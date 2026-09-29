@@ -7,9 +7,10 @@ import { ArrowLeft, ArrowRight, Camera, Check, ChevronLeft, ChevronRight, Heart,
 import { useEffect, useMemo, useState } from "react";
 import { CartDrawer } from "@/components/cart/CartDrawer";
 import { useCart } from "@/components/cart/CartProvider";
+import { useFavorites } from "@/components/favorites/useFavorites";
 import { BrandLogo } from "@/components/site/BrandLogo";
 import { ThemeToggle } from "@/components/theme/ThemeToggle";
-import { formatPrice, type StoreProduct } from "@/lib/commerce";
+import { formatProductPrice, type StoreProduct } from "@/lib/commerce";
 
 type Locale = "en" | "es";
 
@@ -50,7 +51,8 @@ const fallbackImages = [
 
 function buildGallery(product: StoreProduct) {
   const supplied = product.images?.map((image) => ({ src: image.url, alt: image.alt })) ?? [];
-  const images = [{ src: product.image, alt: product.name }, ...supplied, ...fallbackImages.map((src) => ({ src, alt: product.name }))];
+  const realImages = [{ src: product.image, alt: product.name }, ...supplied];
+  const images = supplied.length > 0 ? realImages : [...realImages, ...fallbackImages.map((src) => ({ src, alt: product.name }))];
   return images.filter((image, index) => images.findIndex((candidate) => candidate.src === image.src) === index);
 }
 
@@ -62,7 +64,8 @@ export function ProductDetail({ product, relatedProducts }: { product: StoreProd
   const [activeImage, setActiveImage] = useState(0);
   const [thumbnailStart, setThumbnailStart] = useState(0);
   const [quantity, setQuantity] = useState(1);
-  const [saved, setSaved] = useState(false);
+  const { isSaved, toggleFavorite } = useFavorites(locale);
+  const saved = isSaved(product.id);
   const t = copy[locale];
   const inStock = product.inventoryQuantity === undefined || product.inventoryQuantity > 0;
   const visibleImages = images.slice(thumbnailStart, thumbnailStart + 4);
@@ -124,7 +127,7 @@ export function ProductDetail({ product, relatedProducts }: { product: StoreProd
             <div className="flex items-center justify-between gap-5"><span className="text-[10px] font-black tracking-[.18em] text-brand uppercase">{t.product}</span>{product.sku && <span className="text-[9px] text-foreground/35 uppercase">SKU {product.sku}</span>}</div>
             <div className="flex flex-col gap-2"><h1 className="font-display text-[clamp(48px,6vw,78px)] leading-[.88] font-bold tracking-[-.04em] uppercase">{product.name}</h1><p className="text-xs font-bold tracking-[.08em] text-foreground/55 uppercase">{product.part}</p></div>
             <p className="max-w-2xl text-sm leading-6 text-foreground/60">{product.description ?? t.defaultDescription}</p>
-            <div className="flex items-center justify-between gap-5 border-t border-foreground/12 pt-5"><strong className="text-3xl text-brand">{formatPrice(product.priceCents, locale === "es" ? "es-DO" : "en-US", product.currency)}</strong><p className={`flex items-center gap-2 text-[9px] font-black uppercase ${inStock ? "text-emerald-500" : "text-red-500"}`}><span className={`size-2 rounded-full ${inStock ? "bg-emerald-500" : "bg-red-500"}`} />{inStock ? t.stock : t.unavailable}</p></div>
+            <div className="flex items-center justify-between gap-5 border-t border-foreground/12 pt-5"><strong className="text-3xl text-brand">{formatProductPrice(product, 1, locale === "es" ? "es-DO" : "en-US")}</strong><p className={`flex items-center gap-2 text-[9px] font-black uppercase ${inStock ? "text-emerald-500" : "text-red-500"}`}><span className={`size-2 rounded-full ${inStock ? "bg-emerald-500" : "bg-red-500"}`} />{inStock ? t.stock : t.unavailable}</p></div>
           </div>
 
           <div className="flex flex-col gap-4">
@@ -136,7 +139,7 @@ export function ProductDetail({ product, relatedProducts }: { product: StoreProd
             <button className="flex min-h-13 cursor-pointer items-center justify-between border border-brand px-5 text-[10px] font-black tracking-[.06em] text-brand uppercase transition hover:bg-brand hover:text-black disabled:opacity-40" type="button" onClick={() => { addToCart(); router.push("/checkout"); }} disabled={!inStock}>{t.buy}<ArrowRight size={18} /></button>
           </div>
 
-          <div className="grid grid-cols-2 gap-3"><button className={`flex min-h-12 cursor-pointer items-center justify-center gap-2 border border-foreground/15 text-[10px] font-bold uppercase hover:border-brand hover:text-brand ${saved ? "text-brand" : ""}`} type="button" onClick={() => setSaved((value) => !value)}><Heart className={saved ? "fill-current" : ""} size={17} />{saved ? t.saved : t.save}</button><button className="flex min-h-12 cursor-pointer items-center justify-center gap-2 border border-foreground/15 text-[10px] font-bold uppercase hover:border-brand hover:text-brand" type="button" onClick={share}><Share2 size={17} />{t.share}</button></div>
+          <div className="grid grid-cols-2 gap-3"><button className={`flex min-h-12 cursor-pointer items-center justify-center gap-2 border border-foreground/15 text-[10px] font-bold uppercase hover:border-brand hover:text-brand ${saved ? "text-brand" : ""}`} type="button" onClick={() => void toggleFavorite(product)}><Heart className={saved ? "fill-current" : ""} size={17} />{saved ? t.saved : t.save}</button><button className="flex min-h-12 cursor-pointer items-center justify-center gap-2 border border-foreground/15 text-[10px] font-bold uppercase hover:border-brand hover:text-brand" type="button" onClick={share}><Share2 size={17} />{t.share}</button></div>
 
           <div className="flex flex-col border-y border-foreground/15">{[
             [t.compatibility, product.compatibility ?? t.defaultCompatibility],
@@ -151,7 +154,7 @@ export function ProductDetail({ product, relatedProducts }: { product: StoreProd
         <div className="flex items-end justify-between gap-6 max-[600px]:items-start"><div className="flex flex-col gap-2"><p className="text-[10px] font-black tracking-[.16em] text-brand uppercase">{t.relatedKicker}</p><h2 className="font-display text-[clamp(40px,5vw,64px)] leading-none font-bold tracking-[-.035em] uppercase" id="related-products-title">{t.related}</h2></div><Link className="flex items-center gap-3 text-[9px] font-black text-brand uppercase max-[600px]:hidden" href="/#products">{t.allProducts}<ArrowRight size={16} /></Link></div>
         <div className="grid grid-cols-4 gap-4 max-[900px]:grid-cols-2 max-[520px]:gap-3">{relatedProducts.map((item) => <article className="group flex min-w-0 flex-col overflow-hidden border border-foreground/15 bg-panel" key={item.id}>
           <Link className="relative h-64 overflow-hidden max-[700px]:h-44" href={`/products/${item.slug}`} aria-label={`${t.view}: ${item.name}`}><Image className="object-cover transition duration-500 group-hover:scale-[1.03]" src={item.image} alt={item.name} fill sizes="(max-width: 900px) 50vw, 25vw" style={{ objectPosition: item.objectPosition }} /></Link>
-          <div className="flex flex-1 flex-col justify-between gap-5 p-4 max-[520px]:p-3"><div className="flex min-w-0 flex-col gap-1"><Link className="font-display truncate text-xl font-bold uppercase hover:text-brand max-[520px]:text-base" href={`/products/${item.slug}`}>{item.name}</Link><p className="truncate text-[9px] text-foreground/50 uppercase">{item.part}</p></div><div className="flex items-center justify-between gap-3"><strong className="text-base text-brand max-[520px]:text-sm">{formatPrice(item.priceCents, locale === "es" ? "es-DO" : "en-US", item.currency)}</strong><button className="grid size-10 shrink-0 cursor-pointer place-items-center bg-brand text-black transition hover:bg-[#d99f00]" type="button" onClick={() => addItem(item)} aria-label={`${t.add}: ${item.name}`}><ShoppingCart size={17} /></button></div></div>
+          <div className="flex flex-1 flex-col justify-between gap-5 p-4 max-[520px]:p-3"><div className="flex min-w-0 flex-col gap-1"><Link className="font-display truncate text-xl font-bold uppercase hover:text-brand max-[520px]:text-base" href={`/products/${item.slug}`}>{item.name}</Link><p className="truncate text-[9px] text-foreground/50 uppercase">{item.part}</p></div><div className="flex items-center justify-between gap-3"><strong className="text-base text-brand max-[520px]:text-sm">{formatProductPrice(item, 1, locale === "es" ? "es-DO" : "en-US")}</strong><button className="grid size-10 shrink-0 cursor-pointer place-items-center bg-brand text-black transition hover:bg-[#d99f00]" type="button" onClick={() => addItem(item)} aria-label={`${t.add}: ${item.name}`}><ShoppingCart size={17} /></button></div></div>
         </article>)}</div>
       </section>}
     </div>

@@ -1,5 +1,5 @@
 import type { Metadata } from "next";
-import AuthPage from "../auth/AuthPage";
+import { redirect } from "next/navigation";
 
 export const metadata: Metadata = {
   title: "Create account | Basement Performance Products",
@@ -7,5 +7,5 @@ export const metadata: Metadata = {
 };
 
 export default function SignUpPage() {
-  return <AuthPage mode="sign-up" />;
+  redirect("/account/login?next=/");
 }

@@ -10,12 +10,24 @@ try {
 }
 
 const nextConfig: NextConfig = {
+  experimental: {
+    serverActions: {
+      bodySizeLimit: "25mb",
+    },
+  },
   images: {
-    remotePatterns: supabaseHostname ? [{
-      protocol: "https",
-      hostname: supabaseHostname,
-      pathname: "/storage/v1/object/public/**",
-    }] : [],
+    remotePatterns: [
+      {
+        protocol: "https",
+        hostname: "cdn.shopify.com",
+        pathname: "/**",
+      },
+      ...(supabaseHostname ? [{
+        protocol: "https" as const,
+        hostname: supabaseHostname,
+        pathname: "/storage/v1/object/public/**",
+      }] : []),
+    ],
   },
 };
 
