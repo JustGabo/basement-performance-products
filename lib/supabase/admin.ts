@@ -1,6 +1,10 @@
 import "server-only";
 
+import type { WebSocketLikeConstructor } from "@supabase/realtime-js";
 import { createClient as createSupabaseClient } from "@supabase/supabase-js";
+import { WebSocket } from "ws";
+
+const serverWebSocket = WebSocket as unknown as WebSocketLikeConstructor;
 
 export function createAdminClient() {
   const url = process.env.NEXT_PUBLIC_SUPABASE_URL;
@@ -12,5 +16,6 @@ export function createAdminClient() {
 
   return createSupabaseClient(url, secretKey, {
     auth: { autoRefreshToken: false, persistSession: false },
+    realtime: { transport: serverWebSocket },
   });
 }

@@ -1,0 +1,3 @@
+export function RoundCheckbox({ name, label, defaultChecked = false, value }: { name: string; label: string; defaultChecked?: boolean; value?: string }) {
+  return <label className="flex cursor-pointer items-center gap-3 text-xs text-foreground/65"><input className="peer sr-only" defaultChecked={defaultChecked} name={name} type="checkbox" value={value} /><span className="grid size-4 shrink-0 place-items-center rounded-full border border-foreground/40 transition peer-checked:border-brand peer-checked:bg-brand peer-focus-visible:outline-2 peer-focus-visible:outline-offset-2 peer-focus-visible:outline-brand peer-checked:[&>i]:opacity-100"><i className="size-1.5 rounded-full bg-black opacity-0 transition" /></span><span>{label}</span></label>;
+}

@@ -34,5 +34,6 @@ export default async function CheckoutPage() {
     clientId={process.env.NEXT_PUBLIC_PAYPAL_CLIENT_ID ?? ""}
     environment={process.env.PAYPAL_ENV === "live" ? "production" : "sandbox"}
     prefill={prefill}
+    commerceProvider={process.env.COMMERCE_PROVIDER === "shopify" ? "shopify" : "paypal"}
   />;
 }

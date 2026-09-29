@@ -2,12 +2,16 @@ export type CurrencyCode = string;
 
 export type StoreProduct = {
   id: string;
+  merchandiseId?: string;
   slug: string;
   sku?: string;
   name: string;
   part: string;
   priceCents: number;
   currency: CurrencyCode;
+  displayPriceCents?: number;
+  displayCurrency?: CurrencyCode;
+  marketCountry?: "US" | "DO";
   image: string;
   objectPosition: string;
   inventoryQuantity?: number;

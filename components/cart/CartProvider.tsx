@@ -78,6 +78,7 @@ export function CartProvider({ children }: { children: ReactNode }) {
       setItems((current) => current.filter((item) => item.product.id !== productId));
     },
     clearCart() {
+      localCartStorage.clear();
       setItems([]);
     },
   }), [hydrated, items]);

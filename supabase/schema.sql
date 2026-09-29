@@ -115,6 +115,18 @@ create table if not exists public.build_images (
   created_at timestamptz not null default now()
 );
 
+create table if not exists public.hero_slides (
+  id uuid primary key default gen_random_uuid(),
+  image_url text not null unique,
+  alt_en text not null default 'Basement Performance Products featured build',
+  alt_es text,
+  object_position text not null default 'center',
+  is_active boolean not null default true,
+  sort_order integer not null default 0,
+  created_at timestamptz not null default now(),
+  updated_at timestamptz not null default now()
+);
+
 create table if not exists public.addresses (
   id uuid primary key default gen_random_uuid(),
   user_id uuid not null references auth.users(id) on delete cascade,
@@ -271,7 +283,7 @@ $$;
 do $$
 declare table_name text;
 begin
-  foreach table_name in array array['profiles','categories','products','builds','addresses','carts','cart_items','orders','payments']
+  foreach table_name in array array['profiles','categories','products','builds','hero_slides','addresses','carts','cart_items','orders','payments']
   loop
     execute format('drop trigger if exists set_%I_updated_at on public.%I', table_name, table_name);
     execute format('create trigger set_%I_updated_at before update on public.%I for each row execute function public.set_updated_at()', table_name, table_name);
@@ -327,6 +339,7 @@ alter table public.product_images enable row level security;
 alter table public.product_categories enable row level security;
 alter table public.builds enable row level security;
 alter table public.build_images enable row level security;
+alter table public.hero_slides enable row level security;
 alter table public.addresses enable row level security;
 alter table public.carts enable row level security;
 alter table public.cart_items enable row level security;
@@ -338,17 +351,19 @@ alter table public.favorites enable row level security;
 alter table public.newsletter_subscribers enable row level security;
 
 revoke all on table public.profiles, public.categories, public.products, public.product_images, public.product_categories,
-  public.builds, public.build_images, public.addresses, public.carts, public.cart_items, public.orders, public.order_items,
+  public.builds, public.build_images, public.hero_slides, public.addresses, public.carts, public.cart_items, public.orders, public.order_items,
   public.payments, public.order_status_history, public.favorites, public.newsletter_subscribers from anon, authenticated;
 
-grant select on public.categories, public.products, public.product_images, public.product_categories, public.builds, public.build_images to anon, authenticated;
+grant select on public.categories, public.products, public.product_images, public.product_categories, public.builds, public.build_images, public.hero_slides to anon, authenticated;
 grant select on public.profiles, public.addresses, public.carts, public.cart_items, public.orders, public.order_items, public.payments, public.order_status_history, public.favorites to authenticated;
 grant insert on public.addresses, public.carts, public.cart_items, public.favorites to authenticated;
 grant update on public.addresses, public.carts, public.cart_items to authenticated;
 grant delete on public.addresses, public.carts, public.cart_items, public.favorites to authenticated;
 grant update (first_name, last_name, phone, marketing_opt_in) on public.profiles to authenticated;
 grant insert on public.newsletter_subscribers to anon, authenticated;
-grant insert, update, delete on public.categories, public.products, public.product_images, public.product_categories, public.builds, public.build_images to authenticated;
+grant insert, update, delete on public.categories, public.products, public.product_images, public.product_categories, public.builds, public.build_images, public.hero_slides to authenticated;
+grant update on public.orders to authenticated;
+grant insert on public.order_status_history to authenticated;
 grant all on all tables in schema public to service_role;
 grant usage, select on all sequences in schema public to service_role;
 
@@ -393,6 +408,11 @@ create policy "public reads build images" on public.build_images for select to a
 drop policy if exists "admins manage build images" on public.build_images;
 create policy "admins manage build images" on public.build_images for all to authenticated using (private.is_admin()) with check (private.is_admin());
 
+drop policy if exists "public reads active hero slides" on public.hero_slides;
+create policy "public reads active hero slides" on public.hero_slides for select to anon, authenticated using (is_active or private.is_admin());
+drop policy if exists "admins manage hero slides" on public.hero_slides;
+create policy "admins manage hero slides" on public.hero_slides for all to authenticated using (private.is_admin()) with check (private.is_admin());
+
 drop policy if exists "customers read own addresses" on public.addresses;
 create policy "customers read own addresses" on public.addresses for select to authenticated using ((select auth.uid()) = user_id or private.is_admin());
 drop policy if exists "customers insert own addresses" on public.addresses;
@@ -422,12 +442,16 @@ create policy "customers delete own cart items" on public.cart_items for delete 
 
 drop policy if exists "customers read own orders" on public.orders;
 create policy "customers read own orders" on public.orders for select to authenticated using ((select auth.uid()) = user_id or private.is_admin());
+drop policy if exists "admins update orders" on public.orders;
+create policy "admins update orders" on public.orders for update to authenticated using (private.is_admin()) with check (private.is_admin());
 drop policy if exists "customers read own order items" on public.order_items;
 create policy "customers read own order items" on public.order_items for select to authenticated using (exists (select 1 from public.orders o where o.id = order_id and (o.user_id = (select auth.uid()) or private.is_admin())));
 drop policy if exists "customers read own payments" on public.payments;
 create policy "customers read own payments" on public.payments for select to authenticated using (exists (select 1 from public.orders o where o.id = order_id and (o.user_id = (select auth.uid()) or private.is_admin())));
 drop policy if exists "customers read own order history" on public.order_status_history;
 create policy "customers read own order history" on public.order_status_history for select to authenticated using (exists (select 1 from public.orders o where o.id = order_id and (o.user_id = (select auth.uid()) or private.is_admin())));
+drop policy if exists "admins insert order history" on public.order_status_history;
+create policy "admins insert order history" on public.order_status_history for insert to authenticated with check (private.is_admin());
 
 drop policy if exists "customers read own favorites" on public.favorites;
 create policy "customers read own favorites" on public.favorites for select to authenticated using ((select auth.uid()) = user_id);
@@ -440,17 +464,24 @@ drop policy if exists "anyone subscribes to newsletter" on public.newsletter_sub
 create policy "anyone subscribes to newsletter" on public.newsletter_subscribers for insert to anon, authenticated with check (true);
 
 insert into storage.buckets (id, name, public)
-values ('product-images', 'product-images', true), ('build-images', 'build-images', true)
+values ('product-images', 'product-images', true), ('build-images', 'build-images', true), ('hero-images', 'hero-images', true)
 on conflict (id) do update set public = excluded.public;
 
 drop policy if exists "public reads commerce images" on storage.objects;
-create policy "public reads commerce images" on storage.objects for select to anon, authenticated using (bucket_id in ('product-images', 'build-images'));
+create policy "public reads commerce images" on storage.objects for select to anon, authenticated using (bucket_id in ('product-images', 'build-images', 'hero-images'));
 drop policy if exists "admins upload commerce images" on storage.objects;
-create policy "admins upload commerce images" on storage.objects for insert to authenticated with check (bucket_id in ('product-images', 'build-images') and private.is_admin());
+create policy "admins upload commerce images" on storage.objects for insert to authenticated with check (bucket_id in ('product-images', 'build-images', 'hero-images') and private.is_admin());
 drop policy if exists "admins update commerce images" on storage.objects;
-create policy "admins update commerce images" on storage.objects for update to authenticated using (bucket_id in ('product-images', 'build-images') and private.is_admin()) with check (bucket_id in ('product-images', 'build-images') and private.is_admin());
+create policy "admins update commerce images" on storage.objects for update to authenticated using (bucket_id in ('product-images', 'build-images', 'hero-images') and private.is_admin()) with check (bucket_id in ('product-images', 'build-images', 'hero-images') and private.is_admin());
 drop policy if exists "admins delete commerce images" on storage.objects;
-create policy "admins delete commerce images" on storage.objects for delete to authenticated using (bucket_id in ('product-images', 'build-images') and private.is_admin());
+create policy "admins delete commerce images" on storage.objects for delete to authenticated using (bucket_id in ('product-images', 'build-images', 'hero-images') and private.is_admin());
+
+insert into public.hero_slides (image_url, alt_en, alt_es, object_position, sort_order)
+values
+  ('/images/gallery-blue-civic.png', 'Blue modified Civic displayed with its hood open', 'Civic azul modificado exhibido con el capó abierto', 'center', 0),
+  ('/images/gallery-white-open.png', 'White modified sedan displayed with its hood open', 'Sedán blanco modificado exhibido con el capó abierto', 'center', 1),
+  ('/images/gallery-white-closed.png', 'White lowered sedan in a covered parking structure', 'Sedán blanco rebajado en un estacionamiento cubierto', 'center', 2)
+on conflict (image_url) do nothing;
 
 -- After creating the first owner account, promote it once from the SQL Editor:
 -- update public.profiles set role = 'admin' where id = '<AUTH_USER_UUID>';
