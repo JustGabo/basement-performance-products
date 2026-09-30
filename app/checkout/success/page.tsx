@@ -9,6 +9,10 @@ import { getCustomerOrder } from "@/lib/orders/server";
 export const dynamic = "force-dynamic";
 
 export default async function CheckoutSuccessPage({ searchParams }: { searchParams: Promise<{ order?: string }> }) {
+  // Shopify owns the hosted checkout confirmation and order record. This page
+  // remains only for the legacy PayPal flow, which stores its receipt in Supabase.
+  if (process.env.COMMERCE_PROVIDER === "shopify") redirect("/account/orders");
+
   const { order: orderId } = await searchParams;
   if (!orderId) redirect("/account/orders");
   const { userId, order } = await getCustomerOrder(orderId);

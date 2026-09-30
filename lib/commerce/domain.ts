@@ -17,7 +17,10 @@ export type StoreProduct = {
   inventoryQuantity?: number;
   description?: string;
   compatibility?: string;
+  material?: string;
+  finish?: string;
   images?: Array<{ url: string; alt: string }>;
+  categories?: Array<{ handle: string; title: string }>;
 };
 
 export type CartLine = {
