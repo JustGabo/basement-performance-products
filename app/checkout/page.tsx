@@ -1,10 +1,35 @@
 import { redirect } from "next/navigation";
 import { CheckoutClient, type CheckoutPrefill } from "@/components/checkout/CheckoutClient";
 import { createClient } from "@/lib/supabase/server";
+import { getShopifyCustomer } from "@/lib/shopify/customer-data";
 
 export const dynamic = "force-dynamic";
 
 export default async function CheckoutPage() {
+  if (process.env.COMMERCE_PROVIDER === "shopify") {
+    const customer = await getShopifyCustomer({ orders: 1, addresses: 1 });
+    const address = customer?.addresses.nodes[0];
+    const prefill: CheckoutPrefill = {
+      email: customer?.emailAddress?.emailAddress ?? "",
+      firstName: customer?.firstName ?? "",
+      lastName: customer?.lastName ?? "",
+      phone: address?.phoneNumber ?? "",
+      line1: "",
+      line2: "",
+      city: "",
+      stateRegion: "",
+      postalCode: "",
+      countryCode: process.env.DEFAULT_MARKET_COUNTRY === "DO" ? "DO" : "US",
+    };
+
+    return <CheckoutClient
+      clientId={process.env.NEXT_PUBLIC_PAYPAL_CLIENT_ID ?? ""}
+      environment={process.env.PAYPAL_ENV === "live" ? "production" : "sandbox"}
+      prefill={prefill}
+      commerceProvider="shopify"
+    />;
+  }
+
   const supabase = await createClient();
   const { data: claimsData, error } = await supabase.auth.getClaims();
   const userId = claimsData?.claims?.sub;

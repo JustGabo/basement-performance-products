@@ -20,10 +20,13 @@ type ShopifyProduct = {
   title: string;
   description: string;
   productType: string;
+  collections: { nodes: Array<{ handle: string; title: string }> };
   featuredImage: ShopifyImage | null;
   images: { nodes: ShopifyImage[] };
   shortDescription: { value: string } | null;
   compatibility: { value: string } | null;
+  material: { value: string } | null;
+  finish: { value: string } | null;
   objectPosition: { value: string } | null;
   variants: {
     nodes: Array<{
@@ -51,10 +54,13 @@ const productFields = `
   title
   description
   productType
+  collections(first: 10) { nodes { handle title } }
   featuredImage { url altText }
   images(first: 10) { nodes { url altText } }
   shortDescription: metafield(namespace: "custom", key: "short_description") { value }
   compatibility: metafield(namespace: "custom", key: "compatibility") { value }
+  material: metafield(namespace: "custom", key: "material") { value }
+  finish: metafield(namespace: "custom", key: "finish") { value }
   objectPosition: metafield(namespace: "custom", key: "object_position") { value }
   variants(first: 1) {
     nodes {
@@ -92,12 +98,15 @@ function toProduct(product: ShopifyProduct, countryCode: "US" | "DO"): StoreProd
     inventoryQuantity: variant.availableForSale ? undefined : 0,
     description: product.description || undefined,
     compatibility: product.compatibility?.value || undefined,
+    material: product.material?.value || undefined,
+    finish: product.finish?.value || undefined,
     image: image?.url ?? "/images/performance-parts.png",
     objectPosition: product.objectPosition?.value || "center",
     images: product.images.nodes.map((item) => ({
       url: item.url,
       alt: item.altText || product.title,
     })),
+    categories: product.collections.nodes,
   };
 }
 

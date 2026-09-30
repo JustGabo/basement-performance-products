@@ -2,19 +2,19 @@ import "server-only";
 
 import { storefrontRequest } from "@/lib/shopify/storefront";
 
-export type HeroSlide = {
-  id: string;
-  src: string;
-  alt: string;
-  objectPosition: string;
-};
-
+export type HeroSlide = { id: string; src: string; alt: string; objectPosition: string };
+export type BuildImage = { src: string; alt: string };
 export type BuildGalleryItem = {
   id: string;
+  handle: string;
   src: string;
+  images: BuildImage[];
   title: string;
   meta: string;
+  model: string;
+  description: string;
   href: string;
+  featured: boolean;
 };
 
 export const fallbackHeroSlides: HeroSlide[] = [
@@ -23,31 +23,37 @@ export const fallbackHeroSlides: HeroSlide[] = [
   { id: "fallback-white-closed", src: "/images/gallery-white-closed.png", alt: "White lowered sedan in a covered parking structure", objectPosition: "center" },
 ];
 
+function createFallbackBuild(handle: string, src: string, title: string, meta: string, model: string): BuildGalleryItem {
+  return {
+    id: `fallback-${handle}`,
+    handle,
+    src,
+    images: [{ src, alt: `${meta} ${model} with ${title}` }],
+    title,
+    meta,
+    model,
+    description: `${meta} ${model} community build featuring a custom ${title.toLowerCase()}.`,
+    href: `/builds/${handle}`,
+    featured: true,
+  };
+}
+
 export const fallbackBuildGallery: BuildGalleryItem[] = [
-  { id: "fallback-bmw", src: "/images/build-bmw-front-lip-studio.png", title: "Front Lip", meta: "BMW", href: "#stories" },
-  { id: "fallback-mazda", src: "/images/build-mazda-front-splitter-studio.png", title: "Front Splitter", meta: "Mazda", href: "#stories" },
-  { id: "fallback-toyota", src: "/images/build-toyota-front-side-lips-studio.png", title: "Front & Side Lips", meta: "Toyota", href: "#stories" },
-  { id: "fallback-honda", src: "/images/build-honda-js-racing-lip-studio.png", title: "Front Lip JS Racing", meta: "Honda", href: "#stories" },
+  createFallbackBuild("bmw-front-lip", "/images/build-bmw-front-lip-studio.png", "Front Lip", "BMW", "3 Series"),
+  createFallbackBuild("mazda-front-splitter", "/images/build-mazda-front-splitter-studio.png", "Front Splitter", "Mazda", "Demio"),
+  createFallbackBuild("toyota-front-side-lips", "/images/build-toyota-front-side-lips-studio.png", "Front & Side Lips", "Toyota", "Altezza"),
+  createFallbackBuild("honda-front-lip-js-racing", "/images/build-honda-js-racing-lip-studio.png", "Front Lip JS Racing", "Honda", "Civic"),
 ];
 
+type ShopifyImage = { url: string; altText: string | null };
 type MetaobjectField = {
   key: string;
   value: string | null;
-  reference: {
-    image?: { url: string; altText: string | null } | null;
-  } | null;
+  reference: { image?: ShopifyImage | null } | null;
+  references?: { nodes: Array<{ image?: ShopifyImage | null }> } | null;
 };
-
-type MetaobjectNode = {
-  id: string;
-  handle: string;
-  fields: MetaobjectField[];
-};
-
-type HomepageContentQuery = {
-  heroSlides: { nodes: MetaobjectNode[] };
-  featuredBuilds: { nodes: MetaobjectNode[] };
-};
+type MetaobjectNode = { id: string; handle: string; fields: MetaobjectField[] };
+type MetaobjectsQuery = { entries: { nodes: MetaobjectNode[] } };
 
 function fieldsByKey(node: MetaobjectNode) {
   return new Map(node.fields.map((field) => [field.key, field]));
@@ -58,87 +64,94 @@ function isEnabled(value: string | null | undefined) {
 }
 
 function sortOrder(node: MetaobjectNode) {
-  const value = fieldsByKey(node).get("sort_order")?.value;
-  const parsed = Number(value);
+  const parsed = Number(fieldsByKey(node).get("sort_order")?.value);
   return Number.isFinite(parsed) ? parsed : 999;
 }
 
-export async function getHomepageContent(): Promise<{ heroSlides: HeroSlide[]; buildGallery: BuildGalleryItem[] }> {
-  if (process.env.COMMERCE_PROVIDER !== "shopify") {
-    return { heroSlides: fallbackHeroSlides, buildGallery: fallbackBuildGallery };
+const mediaFields = `
+  fields {
+    key
+    value
+    reference { ... on MediaImage { image { url altText } } }
+    references(first: 20) {
+      nodes { ... on MediaImage { image { url altText } } }
+    }
   }
+`;
 
+async function getHeroSlides() {
+  if (process.env.COMMERCE_PROVIDER !== "shopify") return fallbackHeroSlides;
   try {
-    const data = await storefrontRequest<HomepageContentQuery>(`
-      query HomepageContent($heroType: String!, $buildType: String!) {
-        heroSlides: metaobjects(type: $heroType, first: 20) {
-          nodes {
-            id
-            handle
-            fields {
-              key
-              value
-              reference {
-                ... on MediaImage { image { url altText } }
-              }
-            }
-          }
-        }
-        featuredBuilds: metaobjects(type: $buildType, first: 20) {
-          nodes {
-            id
-            handle
-            fields {
-              key
-              value
-              reference {
-                ... on MediaImage { image { url altText } }
-              }
-            }
-          }
+    const data = await storefrontRequest<MetaobjectsQuery>(`
+      query HomepageHero($type: String!) {
+        entries: metaobjects(type: $type, first: 20) {
+          nodes { id handle ${mediaFields} }
         }
       }
-    `, { heroType: "homepage_hero_slide", buildType: "featured_build" });
-
-    const heroSlides = data.heroSlides.nodes
+    `, { type: "homepage_hero_slide" });
+    const slides = data.entries.nodes
       .filter((node) => isEnabled(fieldsByKey(node).get("active")?.value))
       .sort((left, right) => sortOrder(left) - sortOrder(right))
       .flatMap((node) => {
         const fields = fieldsByKey(node);
         const image = fields.get("image")?.reference?.image;
         if (!image?.url) return [];
-        return [{
-          id: node.id,
-          src: image.url,
-          alt: fields.get("alt_text")?.value || image.altText || "Basement Performance Products featured build",
-          objectPosition: fields.get("object_position")?.value || "center",
-        }];
+        return [{ id: node.id, src: image.url, alt: fields.get("alt_text")?.value || image.altText || "Basement Performance Products featured build", objectPosition: fields.get("object_position")?.value || "center" }];
       })
       .slice(0, 10);
+    return slides.length ? slides : fallbackHeroSlides;
+  } catch {
+    return fallbackHeroSlides;
+  }
+}
 
-    const buildGallery = data.featuredBuilds.nodes
+export async function getVehicleBuilds(): Promise<BuildGalleryItem[]> {
+  if (process.env.COMMERCE_PROVIDER !== "shopify") return fallbackBuildGallery;
+  try {
+    const data = await storefrontRequest<MetaobjectsQuery>(`
+      query VehicleBuilds($type: String!) {
+        entries: metaobjects(type: $type, first: 50) {
+          nodes { id handle ${mediaFields} }
+        }
+      }
+    `, { type: "vehicle_build" });
+    const builds = data.entries.nodes
       .filter((node) => isEnabled(fieldsByKey(node).get("active")?.value))
       .sort((left, right) => sortOrder(left) - sortOrder(right))
       .flatMap((node) => {
         const fields = fieldsByKey(node);
-        const image = fields.get("image")?.reference?.image;
-        const title = fields.get("modification")?.value;
-        if (!image?.url || !title) return [];
+        const cover = fields.get("cover_image")?.reference?.image;
+        const modification = fields.get("modification")?.value;
+        const brand = fields.get("brand")?.value;
+        if (!cover?.url || !modification || !brand) return [];
+        const gallery = fields.get("gallery_images")?.references?.nodes.flatMap((reference) => reference.image?.url ? [{ src: reference.image.url, alt: reference.image.altText || `${brand} ${modification}` }] : []) ?? [];
+        const images = [{ src: cover.url, alt: cover.altText || `${brand} ${modification}` }, ...gallery.filter((image) => image.src !== cover.url)];
         return [{
           id: node.id,
-          src: image.url,
-          title,
-          meta: fields.get("brand")?.value || "Community build",
-          href: fields.get("link")?.value || "#stories",
+          handle: node.handle,
+          src: cover.url,
+          images,
+          title: modification,
+          meta: brand,
+          model: fields.get("model")?.value || "",
+          description: fields.get("description")?.value || "",
+          href: `/builds/${node.handle}`,
+          featured: isEnabled(fields.get("featured")?.value),
         }];
-      })
-      .slice(0, 12);
-
-    return {
-      heroSlides: heroSlides.length ? heroSlides : fallbackHeroSlides,
-      buildGallery: buildGallery.length ? buildGallery : fallbackBuildGallery,
-    };
+      });
+    return builds.length ? builds : fallbackBuildGallery;
   } catch {
-    return { heroSlides: fallbackHeroSlides, buildGallery: fallbackBuildGallery };
+    return fallbackBuildGallery;
   }
+}
+
+export async function getVehicleBuild(handle: string) {
+  const builds = await getVehicleBuilds();
+  return builds.find((build) => build.handle === handle) ?? null;
+}
+
+export async function getHomepageContent(): Promise<{ heroSlides: HeroSlide[]; buildGallery: BuildGalleryItem[] }> {
+  const [heroSlides, builds] = await Promise.all([getHeroSlides(), getVehicleBuilds()]);
+  const featuredBuilds = builds.filter((build) => build.featured);
+  return { heroSlides, buildGallery: (featuredBuilds.length ? featuredBuilds : builds).slice(0, 4) };
 }
