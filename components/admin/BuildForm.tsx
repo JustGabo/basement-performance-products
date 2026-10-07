@@ -6,7 +6,7 @@ import { ImageUploadPreview } from "@/components/admin/ImageUploadPreview";
 import { RoundCheckbox } from "@/components/admin/RoundCheckbox";
 
 export type EditableBuild = { id: string; slug: string; vehicle_brand: string; vehicle_model: string | null; modification_en: string; modification_es: string; description_en: string | null; description_es: string | null; cover_image_url: string; is_published: boolean; sort_order: number; build_images: Array<{ id: string; image_url: string; alt_en: string | null }> };
-const input = "min-h-12 w-full border border-foreground/18 bg-ink px-4 text-sm outline-none focus:border-brand";
+const input = "min-h-12 w-full border border-foreground/18 bg-ink px-4 text-base outline-none focus:border-brand";
 const label = "flex flex-col gap-2 text-[9px] font-black tracking-[.08em] text-foreground/65 uppercase";
 
 export function BuildForm({ build }: { build?: EditableBuild }) {

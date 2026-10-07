@@ -35,7 +35,11 @@ function config() {
   return { domain, privateToken, publicToken, apiVersion };
 }
 
-export async function storefrontRequest<T>(query: string, variables: Record<string, unknown> = {}) {
+export async function storefrontRequest<T>(
+  query: string,
+  variables: Record<string, unknown> = {},
+  options: { revalidate?: number } = {},
+) {
   const { domain, privateToken, publicToken, apiVersion } = config();
   const tokenHeader: Record<string, string> = privateToken
     ? { "Shopify-Storefront-Private-Token": privateToken }
@@ -48,7 +52,9 @@ export async function storefrontRequest<T>(query: string, variables: Record<stri
       ...tokenHeader,
     },
     body: JSON.stringify({ query, variables }),
-    cache: "no-store",
+    ...(options.revalidate === undefined
+      ? { cache: "no-store" as const }
+      : { next: { revalidate: options.revalidate } }),
   });
   const payload = await response.json() as ShopifyResponse<T>;
 

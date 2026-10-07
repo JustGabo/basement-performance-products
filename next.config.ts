@@ -10,6 +10,8 @@ try {
 }
 
 const nextConfig: NextConfig = {
+  // Shopify Customer Accounts rejects localhost callbacks, so local sign-in runs through an HTTPS tunnel.
+  allowedDevOrigins: ["*.ngrok-free.app", "*.ngrok-free.dev", "*.ngrok.app"],
   experimental: {
     serverActions: {
       bodySizeLimit: "25mb",

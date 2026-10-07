@@ -5,6 +5,8 @@ import { cookies } from "next/headers";
 
 const SESSION_COOKIE = "bpp_shopify_customer";
 const OAUTH_COOKIE = "bpp_shopify_oauth";
+const SESSION_MAX_AGE = 30 * 24 * 60 * 60;
+const REFRESH_WINDOW_MS = 5 * 60 * 1000;
 
 type OpenIdConfiguration = {
   authorization_endpoint: string;
@@ -98,6 +100,77 @@ function basicAuthorization() {
   return `Basic ${Buffer.from(`${clientId}:${clientSecret}`).toString("base64")}`;
 }
 
+function sessionMaxAge(session: CustomerSession) {
+  if (session.refreshToken) return SESSION_MAX_AGE;
+  return Math.max(60, Math.floor((session.expiresAt - Date.now()) / 1000));
+}
+
+function sessionCookieOptions(session: CustomerSession) {
+  return {
+    httpOnly: true,
+    secure: process.env.NODE_ENV === "production",
+    sameSite: "lax" as const,
+    path: "/",
+    maxAge: sessionMaxAge(session),
+  };
+}
+
+async function exchangeRefreshToken(refreshToken: string): Promise<CustomerSession | null> {
+  const { clientId } = getConfig();
+  const auth = await discoverAuth();
+  const body = new URLSearchParams({
+    grant_type: "refresh_token",
+    client_id: clientId,
+    refresh_token: refreshToken,
+  });
+  const response = await fetch(auth.token_endpoint, {
+    method: "POST",
+    headers: {
+      "Authorization": basicAuthorization(),
+      "Content-Type": "application/x-www-form-urlencoded",
+      "User-Agent": "Basement-Performance-Products/1.0",
+    },
+    body,
+    cache: "no-store",
+  });
+  const token = await response.json() as TokenResponse & { error?: string; error_description?: string };
+  if (!response.ok || !token.access_token || !token.id_token) return null;
+  return {
+    accessToken: token.access_token,
+    idToken: token.id_token,
+    refreshToken: token.refresh_token || refreshToken,
+    expiresAt: Date.now() + token.expires_in * 1000,
+  };
+}
+
+type SessionCookieUpdate = { value: string; maxAge: number } | { clear: true };
+
+export async function refreshCustomerRequestCookie(getCookie: (name: string) => string | undefined, setCookie: (name: string, value: string) => void): Promise<SessionCookieUpdate | null> {
+  let session: CustomerSession | null;
+  try {
+    session = unseal<CustomerSession>(getCookie(SESSION_COOKIE));
+  } catch {
+    return null;
+  }
+  if (!session?.refreshToken || session.expiresAt - Date.now() > REFRESH_WINDOW_MS) return null;
+
+  try {
+    const refreshed = await exchangeRefreshToken(session.refreshToken);
+    if (!refreshed) {
+      if (session.expiresAt <= Date.now() + 30_000) {
+        setCookie(SESSION_COOKIE, "");
+        return { clear: true };
+      }
+      return null;
+    }
+    const value = seal(refreshed);
+    setCookie(SESSION_COOKIE, value);
+    return { value, maxAge: sessionMaxAge(refreshed) };
+  } catch {
+    return null;
+  }
+}
+
 export async function createCustomerAuthorizationUrl(next?: string, locale?: string) {
   const { clientId, callbackUrl } = getConfig();
   const auth = await discoverAuth();
@@ -169,13 +242,7 @@ export async function completeCustomerAuthorization(code: string, state: string)
     refreshToken: token.refresh_token,
     expiresAt: Date.now() + token.expires_in * 1000,
   };
-  cookieStore.set(SESSION_COOKIE, seal(session), {
-    httpOnly: true,
-    secure: process.env.NODE_ENV === "production",
-    sameSite: "lax",
-    path: "/",
-    maxAge: token.refresh_token ? 30 * 24 * 60 * 60 : token.expires_in,
-  });
+  cookieStore.set(SESSION_COOKIE, seal(session), sessionCookieOptions(session));
   return transaction.next;
 }
 

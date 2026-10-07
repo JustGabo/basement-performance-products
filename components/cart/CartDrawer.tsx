@@ -11,8 +11,8 @@ import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip
 type Locale = "en" | "es";
 
 const copy = {
-  en: { title: "Your cart", description: "Review the parts selected for your build.", empty: "Your cart is empty.", emptyCopy: "Add a product to start your next build.", total: "Total", note: "Taxes and shipping calculated at checkout.", view: "View cart", checkout: "Checkout", remove: "Remove", decrease: "Decrease quantity", increase: "Increase quantity", trigger: "Open shopping cart" },
-  es: { title: "Tu carrito", description: "Revisa las piezas seleccionadas para tu proyecto.", empty: "Tu carrito está vacío.", emptyCopy: "Agrega un producto para comenzar tu próximo proyecto.", total: "Total", note: "Impuestos y envío calculados al pagar.", view: "Ver carrito", checkout: "Pagar", remove: "Eliminar", decrease: "Disminuir cantidad", increase: "Aumentar cantidad", trigger: "Abrir carrito" },
+  en: { garage: "Your garage", title: "Your cart", description: "Review the parts selected for your build.", empty: "Your cart is empty.", emptyCopy: "Add a product to start your next build.", total: "Total", note: "Taxes and shipping calculated at checkout.", view: "View cart", checkout: "Checkout", remove: "Remove", decrease: "Decrease quantity", increase: "Increase quantity", trigger: "Open shopping cart" },
+  es: { garage: "Tu garaje", title: "Tu carrito", description: "Revisa las piezas seleccionadas para tu proyecto.", empty: "Tu carrito está vacío.", emptyCopy: "Agrega un producto para comenzar tu próximo proyecto.", total: "Total", note: "Los impuestos y el envío se calculan al finalizar la compra.", view: "Ver carrito", checkout: "Pagar", remove: "Eliminar", decrease: "Disminuir cantidad", increase: "Aumentar cantidad", trigger: "Abrir carrito" },
 } as const;
 
 export function CartDrawer({ locale = "en", className = "" }: { locale?: Locale; className?: string }) {
@@ -29,7 +29,7 @@ export function CartDrawer({ locale = "en", className = "" }: { locale?: Locale;
 
     <SheetContent className="w-full gap-0 border-foreground/15 bg-ink p-0 text-foreground sm:max-w-[500px]" side="right">
       <SheetHeader className="gap-2 border-b border-foreground/12 px-6 py-6 text-left max-[520px]:px-4">
-        <div className="flex items-end justify-between gap-6 pr-8"><div className="flex flex-col gap-1"><span className="text-[9px] font-black tracking-[.16em] text-brand uppercase">Your garage</span><SheetTitle className="font-display text-4xl font-bold tracking-[-.03em] text-foreground uppercase">{t.title}</SheetTitle></div><span className="text-xs font-black text-brand">{String(totalItems).padStart(2, "0")}</span></div>
+        <div className="flex items-end justify-between gap-6 pr-8"><div className="flex flex-col gap-1"><span className="text-[9px] font-black tracking-[.16em] text-brand uppercase">{t.garage}</span><SheetTitle className="font-display text-4xl font-bold tracking-[-.03em] text-foreground uppercase">{t.title}</SheetTitle></div><span className="text-xs font-black text-brand">{String(totalItems).padStart(2, "0")}</span></div>
         <SheetDescription className="text-xs text-foreground/45">{t.description}</SheetDescription>
       </SheetHeader>
 

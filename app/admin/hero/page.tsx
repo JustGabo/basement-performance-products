@@ -9,7 +9,7 @@ import { requireAdmin } from "@/lib/admin/auth";
 
 type Slide = { id: string; image_url: string; alt_en: string; is_active: boolean; sort_order: number; object_position: string };
 
-const input = "min-h-12 w-full border border-foreground/18 bg-ink px-4 text-sm outline-none transition placeholder:text-foreground/25 focus:border-brand";
+const input = "min-h-12 w-full border border-foreground/18 bg-ink px-4 text-base outline-none transition placeholder:text-foreground/25 focus:border-brand";
 const label = "flex flex-col gap-2 text-[9px] font-black tracking-[.08em] text-foreground/65 uppercase";
 
 export default async function AdminHeroPage({ searchParams }: { searchParams: Promise<{ saved?: string; error?: string }> }) {

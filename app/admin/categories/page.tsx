@@ -6,7 +6,7 @@ import { CategoryActions } from "@/components/admin/CategoryActions";
 import { requireAdmin } from "@/lib/admin/auth";
 
 type CategoryRow = { id: string; slug: string; name_en: string; name_es: string; description_en: string | null; description_es: string | null; is_active: boolean; product_categories: Array<{ count: number }> };
-const input = "min-h-12 w-full border border-foreground/18 bg-ink px-4 text-sm outline-none focus:border-brand";
+const input = "min-h-12 w-full border border-foreground/18 bg-ink px-4 text-base outline-none focus:border-brand";
 const label = "flex flex-col gap-2 text-[9px] font-black tracking-[.08em] text-foreground/65 uppercase";
 
 export default async function AdminCategoriesPage({ searchParams }: { searchParams: Promise<{ saved?: string; error?: string }> }) {

@@ -1,4 +1,5 @@
 import { NextResponse } from "next/server";
+import { rateLimit, requestClientKey, sameOrigin } from "@/lib/rate-limit";
 import { storefrontRequest } from "@/lib/shopify/storefront";
 
 type CheckoutBody = {
@@ -25,6 +26,17 @@ type CartCreatePayload = {
 };
 
 export async function POST(request: Request) {
+  if (!sameOrigin(request)) {
+    return NextResponse.json({ error: "Checkout must start from this site." }, { status: 403 });
+  }
+  const limited = rateLimit(`shopify-checkout:${requestClientKey(request)}`, 8, 10 * 60 * 1000);
+  if (!limited.ok) {
+    return NextResponse.json({ error: "Too many checkout attempts. Try again shortly." }, {
+      status: 429,
+      headers: { "Retry-After": String(limited.retryAfter) },
+    });
+  }
+
   try {
     const body = await request.json() as CheckoutBody;
     const countryCode = body.buyer?.countryCode?.toUpperCase();
@@ -36,7 +48,7 @@ export async function POST(request: Request) {
       merchandiseId: item.merchandiseId,
       quantity: Math.min(99, Math.max(1, Math.trunc(item.quantity ?? 1))),
     }));
-    if (!lines.length || lines.some((line) => !line.merchandiseId?.startsWith("gid://shopify/ProductVariant/"))) {
+    if (!lines.length || lines.length > 30 || lines.some((line) => !line.merchandiseId?.startsWith("gid://shopify/ProductVariant/"))) {
       return NextResponse.json({ error: "Your cart contains an item that is not available in Shopify." }, { status: 400 });
     }
 

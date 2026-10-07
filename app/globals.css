@@ -18,7 +18,7 @@
 @layer base {
   :root {
     --theme-ink: #fafaf9;
-    --theme-panel: #f1f1ef;
+    --theme-panel: #F6F6F6;
     --theme-media: #eeeeec;
     --theme-media-accent: #ffffff;
     --theme-line: #d9d9d6;
@@ -42,12 +42,13 @@
   button, input, select, textarea { font: inherit; }
   button { color: inherit; }
   a { color: inherit; text-decoration: none; }
+}
 
-  @media (hover: none) and (pointer: coarse) {
-    input:not([type="checkbox"]):not([type="radio"]),
-    select,
-    textarea {
-      font-size: 16px;
-    }
+/* iOS Safari zooms focused fields below 16px. Keep this outside @layer so Tailwind utilities cannot override it. */
+@media (hover: none) and (pointer: coarse) {
+  input:not([type="checkbox"]):not([type="radio"]):not([type="hidden"]):not([type="file"]):not([type="button"]):not([type="submit"]):not([type="reset"]):not([type="image"]):not([type="range"]):not([type="color"]),
+  select,
+  textarea {
+    font-size: 16px !important;
   }
 }

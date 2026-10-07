@@ -7,6 +7,7 @@ import { ArrowLeft, ArrowRight, Eye, EyeOff } from "lucide-react";
 import { FormEvent, useEffect, useState } from "react";
 import { getCustomerAuthClient } from "@/lib/customer-auth/client";
 import { ThemeToggle } from "@/components/theme/ThemeToggle";
+import { persistStoreLocale } from "@/lib/store-locale-client";
 
 type AuthMode = "sign-in" | "sign-up";
 type Locale = "en" | "es";
@@ -21,14 +22,14 @@ const copy = {
   },
   es: {
     language: "Idioma", back: "Volver a la tienda", show: "Mostrar contraseña", hide: "Ocultar contraseña",
-    loading: "Espera un momento...", mismatch: "Las contraseñas no coinciden.", autoSignIn: "La cuenta fue creada, pero el inicio de sesión automático está desactivado en Supabase.",
-    legal: "Al continuar, aceptas nuestros", terms: "Términos de servicio", privacy: "Política de privacidad", and: "y la",
-    signIn: { eyebrow: "Acceso de clientes", title: "Iniciar sesión", intro: "Accede a tus pedidos, proyectos guardados y datos de cuenta.", email: "Correo electrónico", password: "Contraseña", remember: "Mantener mi sesión iniciada", forgot: "¿Olvidaste tu contraseña?", submit: "Iniciar sesión", switchLead: "¿Eres nuevo en Basement?", switchAction: "Crear una cuenta" },
-    signUp: { eyebrow: "Únete a la comunidad", title: "Crear cuenta", intro: "Guarda tus piezas favoritas y mantén cada proyecto en un solo lugar.", firstName: "Nombre", lastName: "Apellido", email: "Correo electrónico", password: "Crear contraseña", confirm: "Confirmar contraseña", marketing: "Envíenme nuevos lanzamientos, proyectos y ofertas.", terms: "Acepto los Términos de servicio y la Política de privacidad.", submit: "Crear cuenta", switchLead: "¿Ya tienes una cuenta?", switchAction: "Iniciar sesión" },
+    loading: "Espera un momento...", mismatch: "Las contraseñas no coinciden.", autoSignIn: "La cuenta se creó, pero el inicio de sesión automático está desactivado en Supabase.",
+    legal: "Al continuar, aceptas los", terms: "Términos de servicio", privacy: "Política de privacidad", and: "y la",
+    signIn: { eyebrow: "Acceso de clientes", title: "Iniciar sesión", intro: "Accede a tus pedidos, proyectos guardados y datos de tu cuenta.", email: "Correo electrónico", password: "Contraseña", remember: "Mantener mi sesión iniciada", forgot: "¿Olvidaste tu contraseña?", submit: "Iniciar sesión", switchLead: "¿Eres nuevo en Basement?", switchAction: "Crear una cuenta" },
+    signUp: { eyebrow: "Únete a la comunidad", title: "Crear cuenta", intro: "Guarda tus piezas favoritas y organiza todos tus proyectos en un solo lugar.", firstName: "Nombre", lastName: "Apellido", email: "Correo electrónico", password: "Crear contraseña", confirm: "Confirmar contraseña", marketing: "Envíame nuevos lanzamientos, proyectos y ofertas.", terms: "Acepto los Términos de servicio y la Política de privacidad.", submit: "Crear cuenta", switchLead: "¿Ya tienes una cuenta?", switchAction: "Iniciar sesión" },
   },
 } as const;
 
-const fieldClass = "h-[50px] w-full rounded-sm border border-foreground/20 bg-ink px-4 text-foreground outline-none transition focus:border-brand focus:ring-3 focus:ring-brand/10 [@media(max-height:820px)]:h-[41px]";
+const fieldClass = "h-[50px] w-full rounded-sm border border-foreground/20 bg-ink px-4 text-base text-foreground outline-none transition focus:border-brand focus:ring-3 focus:ring-brand/10 [@media(max-height:820px)]:h-[41px]";
 const labelClass = "grid gap-2 text-[11px] font-bold tracking-[.06em] text-foreground/80 uppercase [@media(max-height:820px)]:gap-1";
 
 export default function AuthPage({ mode }: { mode: AuthMode }) {
@@ -54,8 +55,7 @@ export default function AuthPage({ mode }: { mode: AuthMode }) {
 
   const changeLocale = (next: Locale) => {
     setLocale(next);
-    window.localStorage.setItem("basement-locale", next);
-    document.documentElement.setAttribute("lang", next);
+    persistStoreLocale(next);
   };
 
   const handleSubmit = async (event: FormEvent<HTMLFormElement>) => {

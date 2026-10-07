@@ -1,12 +1,22 @@
 import type { Metadata } from "next";
 import { ContentPage } from "@/components/site/ContentPage";
+import { shareMetadata } from "@/lib/seo";
 
-export const metadata: Metadata = { title: "Contact | Basement Performance Products" };
+export const metadata: Metadata = shareMetadata({
+  title: "Contact",
+  description: "Ask Basement about fitment, an order, or a custom piece.",
+  path: "/contact",
+});
 
 export default function ContactPage() {
-  return <ContentPage eyebrow={{ en: "Let’s talk", es: "Hablemos" }} title={{ en: "Contact the Basement.", es: "Contacta al Basement." }} intro={{ en: "Questions about fitment, availability or a custom project? Start here.", es: "¿Preguntas sobre compatibilidad, disponibilidad o un proyecto personalizado? Empieza aquí." }} sections={[
-    { title: { en: "Product questions", es: "Preguntas de productos" }, body: { en: "Share the year, make and model of your vehicle when asking about product compatibility.", es: "Comparte el año, marca y modelo de tu vehículo cuando consultes sobre compatibilidad." } },
-    { title: { en: "Orders and support", es: "Pedidos y soporte" }, body: { en: "For order support, include your order number so the team can locate the purchase quickly.", es: "Para soporte de pedidos, incluye tu número de orden para localizar la compra rápidamente." } },
-    { title: { en: "Current contact channel", es: "Canal de contacto actual" }, body: { en: "Until the complete support form is connected, contact the team through @danielsperformanceparts on Instagram.", es: "Hasta conectar el formulario de soporte, contacta al equipo mediante @danielsperformanceparts en Instagram." } },
-  ]} draft />;
+  return <ContentPage
+    eyebrow={{ en: "The shop", es: "El taller" }}
+    title={{ en: "Talk to the shop.", es: "Habla con el taller." }}
+    intro={{ en: "Fitment, an order, or a custom piece. Tell us the car and we’ll take it from there.", es: "Compatibilidad, un pedido o una pieza a medida. Dinos el carro y seguimos desde ahí." }}
+    sections={[
+      { title: { en: "Fitment", es: "Ajuste" }, body: { en: "Send the year, make and model, plus the part you’re looking at. A photo of the bumper or the area you’re changing helps us confirm fitment before you order.", es: "Manda año, marca y modelo, y la pieza que estás viendo. Una foto del bumper o de la zona que vas a modificar nos ayuda a confirmar el ajuste antes de que pidas." } },
+      { title: { en: "Orders", es: "Pedidos" }, body: { en: "Include your order number and the email used at checkout. We’ll find the order and tell you where it stands.", es: "Incluye el número de pedido y el correo del checkout. Localizamos la orden y te decimos en qué va." } },
+      { title: { en: "Where to write", es: "Dónde escribir" }, body: { en: "Message @danielsperformanceparts on Instagram. That’s the direct line to the shop for fitment, orders and custom work.", es: "Escríbenos a @danielsperformanceparts en Instagram. Esa es la línea directa del taller para ajuste, pedidos y trabajo a medida." } },
+    ]}
+  />;
 }

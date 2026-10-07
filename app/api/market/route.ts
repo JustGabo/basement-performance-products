@@ -1,4 +1,5 @@
 import { NextResponse } from "next/server";
+import { MARKET_COOKIE } from "@/lib/commerce/market";
 
 export async function POST(request: Request) {
   const body = await request.json().catch(() => null) as { country?: string } | null;
@@ -8,7 +9,7 @@ export async function POST(request: Request) {
   }
 
   const response = NextResponse.json({ country });
-  response.cookies.set("basement-market", country, {
+  response.cookies.set(MARKET_COOKIE, country, {
     path: "/",
     maxAge: 60 * 60 * 24 * 365,
     sameSite: "lax",

@@ -3,14 +3,14 @@
 import Image from "next/image";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { ArrowLeft, ArrowRight, Camera, Check, ChevronLeft, ChevronRight, Heart, Minus, Plus, Share2, ShieldCheck, ShoppingCart, Truck, UserRound, Zap } from "lucide-react";
+import { ArrowLeft, ArrowRight, Camera, Check, ChevronLeft, ChevronRight, Minus, Plus, Share2, ShieldCheck, ShoppingCart, Truck, UserRound, Zap } from "lucide-react";
 import { useEffect, useMemo, useState } from "react";
 import { CartDrawer } from "@/components/cart/CartDrawer";
 import { useCart } from "@/components/cart/CartProvider";
-import { useFavorites } from "@/components/favorites/useFavorites";
 import { BrandLogo } from "@/components/site/BrandLogo";
 import { ThemeToggle } from "@/components/theme/ThemeToggle";
 import { formatProductPrice, type StoreProduct } from "@/lib/commerce";
+import { persistStoreLocale } from "@/lib/store-locale-client";
 
 type Locale = "en" | "es";
 
@@ -28,16 +28,16 @@ const copy = {
     allProducts: "All products", about: "About us", contact: "Contact", terms: "Terms", privacy: "Privacy", footerMotto: "Performance products. Real builds. Built in the basement.",
   },
   es: {
-    back: "Volver a productos", account: "Cuenta de cliente", cart: "artículos en el carrito", product: "Producto de rendimiento",
+    back: "Volver a productos", account: "Mi cuenta", cart: "artículos en el carrito", product: "Pieza de alto rendimiento",
     stock: "Disponible", unavailable: "No disponible actualmente", quantity: "Cantidad", add: "Agregar al carrito", buy: "Comprar ahora",
     save: "Guardar", saved: "Guardado", share: "Compartir", description: "Descripción", compatibility: "Compatibilidad",
-    shipping: "Envíos y devoluciones", defaultDescription: "Diseñado para una terminación precisa y agresiva, con materiales duraderos para uso real en calle y pista.",
-    defaultCompatibility: "Confirma año, marca, modelo y versión con nuestro equipo antes de instalar.",
-    shippingCopy: "El envío se calcula al pagar. Revisa el ajuste antes de pintar, perforar o instalar permanentemente.",
-    secure: "Pago seguro", support: "Soporte de compatibilidad", delivery: "Entrega local e internacional", added: "Agregado al carrito",
+    shipping: "Envíos y devoluciones", defaultDescription: "Diseñado para lograr un acabado preciso y agresivo, con materiales duraderos para la calle y la pista.",
+    defaultCompatibility: "Confirma el año, la marca, el modelo y la versión con nuestro equipo antes de instalar.",
+    shippingCopy: "El envío se calcula al finalizar la compra. Verifica el encaje antes de pintar, perforar o instalar la pieza de forma permanente.",
+    secure: "Pago seguro", support: "Asesoría sobre compatibilidad", delivery: "Envíos nacionales e internacionales", added: "Agregado al carrito",
     previous: "Imagen anterior", next: "Imagen siguiente", previousThumbs: "Miniaturas anteriores", nextThumbs: "Miniaturas siguientes",
-    relatedKicker: "Completa el proyecto", related: "Productos similares", view: "Ver producto", footerShop: "Tienda", footerCompany: "Compañía",
-    allProducts: "Todos los productos", about: "Nosotros", contact: "Contacto", terms: "Términos", privacy: "Privacidad", footerMotto: "Productos de rendimiento. Proyectos reales. Hecho en el basement.",
+    relatedKicker: "Completa el proyecto", related: "Productos similares", view: "Ver producto", footerShop: "Tienda", footerCompany: "Empresa",
+    allProducts: "Todos los productos", about: "Nosotros", contact: "Contacto", terms: "Términos", privacy: "Privacidad", footerMotto: "Piezas de alto rendimiento. Proyectos reales. Todo hecho en el Basement.",
   },
 } as const;
 
@@ -56,16 +56,14 @@ function buildGallery(product: StoreProduct) {
   return images.filter((image, index) => images.findIndex((candidate) => candidate.src === image.src) === index);
 }
 
-export function ProductDetail({ product, relatedProducts }: { product: StoreProduct; relatedProducts: StoreProduct[] }) {
+export function ProductDetail({ product, relatedProducts, initialLocale }: { product: StoreProduct; relatedProducts: StoreProduct[]; initialLocale: Locale }) {
   const router = useRouter();
   const { addItem } = useCart();
   const images = useMemo(() => buildGallery(product), [product]);
-  const [locale, setLocale] = useState<Locale>("en");
+  const [locale, setLocale] = useState<Locale>(initialLocale);
   const [activeImage, setActiveImage] = useState(0);
   const [thumbnailStart, setThumbnailStart] = useState(0);
   const [quantity, setQuantity] = useState(1);
-  const { isSaved, toggleFavorite } = useFavorites(locale);
-  const saved = isSaved(product.id);
   const t = copy[locale];
   const inStock = product.inventoryQuantity === undefined || product.inventoryQuantity > 0;
   const visibleImages = images.slice(thumbnailStart, thumbnailStart + 4);
@@ -73,10 +71,19 @@ export function ProductDetail({ product, relatedProducts }: { product: StoreProd
   useEffect(() => {
     const timer = window.setTimeout(() => {
       const stored = window.localStorage.getItem("basement-locale");
-      if (stored === "en" || stored === "es") setLocale(stored);
+      if (stored === "en" || stored === "es") {
+        setLocale(stored);
+        document.documentElement.setAttribute("lang", stored);
+        if (stored !== initialLocale) {
+          persistStoreLocale(stored);
+          router.refresh();
+        }
+      } else {
+        persistStoreLocale(initialLocale);
+      }
     }, 0);
     return () => window.clearTimeout(timer);
-  }, []);
+  }, [initialLocale, router]);
 
   const selectImage = (index: number) => {
     const next = (index + images.length) % images.length;
@@ -111,7 +118,7 @@ export function ProductDetail({ product, relatedProducts }: { product: StoreProd
         <div className="flex min-w-0 flex-col gap-3">
           <div className="relative min-h-145 overflow-hidden rounded-sm border border-foreground/15 bg-[radial-gradient(circle_at_50%_42%,var(--theme-media-accent),var(--theme-media)_72%)] max-[1200px]:min-h-125 max-[700px]:min-h-95">
             <Image className="object-contain p-8 drop-shadow-[0_22px_24px_rgba(0,0,0,.22)] max-[700px]:p-4" src={images[activeImage].src} alt={images[activeImage].alt} fill priority sizes="(max-width: 1000px) 100vw, 55vw" style={{ objectPosition: product.objectPosition }} />
-            <span className="absolute top-4 left-4 bg-brand px-3 py-2 text-[9px] font-black tracking-[.12em] text-black uppercase">Carbon series</span>
+            {product.productType && <span className="absolute top-4 left-4 bg-brand px-3 py-2 text-[9px] font-black tracking-[.12em] text-black uppercase">{product.productType}</span>}
             {images.length > 1 && <><button className="absolute top-1/2 left-4 grid size-11 -translate-y-1/2 cursor-pointer place-items-center rounded-full border border-white/25 bg-black/65 text-white backdrop-blur hover:border-brand hover:text-brand" type="button" onClick={() => selectImage(activeImage - 1)} aria-label={t.previous}><ChevronLeft size={21} /></button><button className="absolute top-1/2 right-4 grid size-11 -translate-y-1/2 cursor-pointer place-items-center rounded-full border border-white/25 bg-black/65 text-white backdrop-blur hover:border-brand hover:text-brand" type="button" onClick={() => selectImage(activeImage + 1)} aria-label={t.next}><ChevronRight size={21} /></button></>}
           </div>
 
@@ -139,7 +146,7 @@ export function ProductDetail({ product, relatedProducts }: { product: StoreProd
             <button className="flex min-h-13 cursor-pointer items-center justify-between border border-brand px-5 text-[10px] font-black tracking-[.06em] text-brand uppercase transition hover:bg-brand hover:text-black disabled:opacity-40" type="button" onClick={() => { addToCart(); router.push("/checkout"); }} disabled={!inStock}>{t.buy}<ArrowRight size={18} /></button>
           </div>
 
-          <div className="grid grid-cols-2 gap-3"><button className={`flex min-h-12 cursor-pointer items-center justify-center gap-2 border border-foreground/15 text-[10px] font-bold uppercase hover:border-brand hover:text-brand ${saved ? "text-brand" : ""}`} type="button" onClick={() => void toggleFavorite(product)}><Heart className={saved ? "fill-current" : ""} size={17} />{saved ? t.saved : t.save}</button><button className="flex min-h-12 cursor-pointer items-center justify-center gap-2 border border-foreground/15 text-[10px] font-bold uppercase hover:border-brand hover:text-brand" type="button" onClick={share}><Share2 size={17} />{t.share}</button></div>
+          <button className="flex min-h-12 cursor-pointer items-center justify-center gap-2 border border-foreground/15 text-[10px] font-bold uppercase hover:border-brand hover:text-brand" type="button" onClick={share}><Share2 size={17} />{t.share}</button>
 
           <div className="flex flex-col border-y border-foreground/15">{[
             [t.compatibility, product.compatibility ?? t.defaultCompatibility],

@@ -2,6 +2,7 @@ import type { CartLine } from "./domain";
 
 const STORAGE_KEY = "basement-cart-v2";
 const LEGACY_STORAGE_KEY = "basement-cart-v1";
+const PENDING_CHECKOUT_KEY = "basement-shopify-checkout";
 
 export interface BrowserCartStorage {
   read(): CartLine[];
@@ -56,3 +57,42 @@ export const localCartStorage: BrowserCartStorage = {
     window.localStorage.removeItem(LEGACY_STORAGE_KEY);
   },
 };
+
+const PENDING_CHECKOUT_TTL_MS = 10 * 24 * 60 * 60 * 1000;
+
+export type PendingShopifyCheckout = {
+  cartId: string;
+  productIds: string[];
+  startedAt: number;
+};
+
+function isPendingCheckout(value: unknown): value is PendingShopifyCheckout {
+  if (!value || typeof value !== "object") return false;
+  const pending = value as Partial<PendingShopifyCheckout>;
+  return typeof pending.cartId === "string"
+    && pending.cartId.startsWith("gid://shopify/Cart/")
+    && Array.isArray(pending.productIds)
+    && pending.productIds.every((id) => typeof id === "string")
+    && typeof pending.startedAt === "number";
+}
+
+export function pendingCheckoutExpired(pending: PendingShopifyCheckout, now = Date.now()) {
+  return now - pending.startedAt > PENDING_CHECKOUT_TTL_MS;
+}
+
+export function readPendingCheckout(): PendingShopifyCheckout | null {
+  try {
+    const parsed: unknown = JSON.parse(window.localStorage.getItem(PENDING_CHECKOUT_KEY) ?? "null");
+    return isPendingCheckout(parsed) ? parsed : null;
+  } catch {
+    return null;
+  }
+}
+
+export function writePendingCheckout(pending: PendingShopifyCheckout) {
+  window.localStorage.setItem(PENDING_CHECKOUT_KEY, JSON.stringify(pending));
+}
+
+export function clearPendingCheckout() {
+  window.localStorage.removeItem(PENDING_CHECKOUT_KEY);
+}

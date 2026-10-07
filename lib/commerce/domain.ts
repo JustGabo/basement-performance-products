@@ -16,9 +16,11 @@ export type StoreProduct = {
   objectPosition: string;
   inventoryQuantity?: number;
   description?: string;
+  productType?: string;
+  vehicleMakes?: string[];
   compatibility?: string;
-  material?: string;
-  finish?: string;
+  material?: string[];
+  finish?: string[];
   images?: Array<{ url: string; alt: string }>;
   categories?: Array<{ handle: string; title: string }>;
 };

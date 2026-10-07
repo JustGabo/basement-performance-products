@@ -18,9 +18,9 @@ export function BuildHeader({ backHref = "/", backLabel = "Back to shop" }: { ba
 }
 
 export function BuildFooter() {
-  return <footer className={`${buildShell} flex items-center justify-between gap-6 border-t border-foreground/12 py-8 text-[10px] text-foreground/45 max-[600px]:flex-col max-[600px]:items-start`}><span>© 2026 Basement Performance Products.</span><div className="flex gap-5"><Link className="hover:text-brand" href="/terms">Terms</Link><Link className="hover:text-brand" href="/privacy">Privacy</Link><Link className="hover:text-brand" href="/contact">Contact</Link></div></footer>;
+  return <footer className={`${buildShell} flex shrink-0 items-center justify-between gap-6 border-t border-foreground/12 py-3 text-[10px] text-foreground/45 max-[600px]:flex-col max-[600px]:items-start max-[600px]:py-4`}><span>© 2026 Basement Performance Products.</span><div className="flex gap-5"><Link className="hover:text-brand" href="/terms">Terms</Link><Link className="hover:text-brand" href="/privacy">Privacy</Link><Link className="hover:text-brand" href="/contact">Contact</Link></div></footer>;
 }
 
 export function BuildLayout({ children, backHref, backLabel }: { children: ReactNode; backHref?: string; backLabel?: string }) {
-  return <main className="min-h-dvh bg-ink text-foreground"><BuildHeader backHref={backHref} backLabel={backLabel} />{children}<BuildFooter /></main>;
+  return <main className="flex min-h-dvh flex-col bg-ink text-foreground"><BuildHeader backHref={backHref} backLabel={backLabel} />{children}<BuildFooter /></main>;
 }

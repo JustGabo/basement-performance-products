@@ -19,6 +19,16 @@ type ProductRow = {
   product_images: Array<{ image_url: string; alt_en: string | null; sort_order: number }> | null;
 };
 
+function metadataTextList(value: unknown) {
+  if (typeof value === "string") return value.trim() ? [value.trim()] : undefined;
+  if (!Array.isArray(value)) return undefined;
+  const values = value
+    .filter((item): item is string => typeof item === "string")
+    .map((item) => item.trim())
+    .filter(Boolean);
+  return values.length ? values : undefined;
+}
+
 function toProduct(row: ProductRow): StoreProduct {
   return {
     id: row.id,
@@ -30,7 +40,11 @@ function toProduct(row: ProductRow): StoreProduct {
     currency: row.currency,
     inventoryQuantity: row.inventory_quantity,
     description: row.description_en ?? undefined,
+    productType: typeof row.metadata?.product_type === "string" ? row.metadata.product_type : undefined,
+    vehicleMakes: metadataTextList(row.metadata?.vehicle_make),
     compatibility: typeof row.metadata?.compatibility === "string" ? row.metadata.compatibility : undefined,
+    material: metadataTextList(row.metadata?.material),
+    finish: metadataTextList(row.metadata?.finish),
     image: row.primary_image_url ?? "/images/performance-parts.png",
     objectPosition: typeof row.metadata?.object_position === "string" ? row.metadata.object_position : "center",
     images: row.product_images
