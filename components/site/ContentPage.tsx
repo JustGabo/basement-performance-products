@@ -6,6 +6,7 @@ import { useEffect, useState } from "react";
 import { CartDrawer } from "@/components/cart/CartDrawer";
 import { BrandLogo } from "@/components/site/BrandLogo";
 import { ThemeToggle } from "@/components/theme/ThemeToggle";
+import { persistStoreLocale } from "@/lib/store-locale-client";
 
 type Locale = "en" | "es";
 type LocalizedText = { en: string; es: string };
@@ -41,8 +42,7 @@ export function ContentPage({ eyebrow, title, intro, sections, draft = false }: 
 
   const changeLocale = (next: Locale) => {
     setLocale(next);
-    window.localStorage.setItem("basement-locale", next);
-    document.documentElement.setAttribute("lang", next);
+    persistStoreLocale(next);
   };
 
   return <main className="min-h-svh bg-ink text-foreground transition-colors">
@@ -55,9 +55,9 @@ export function ContentPage({ eyebrow, title, intro, sections, draft = false }: 
     </header>
 
     <section className="border-b border-foreground/12 bg-panel/45">
-      <div className="mx-auto flex w-[min(1180px,calc(100%_-_56px))] flex-col gap-5 py-16 max-[700px]:w-[calc(100%_-_32px)] max-[700px]:py-10">
+      <div className="mx-auto flex w-[min(1180px,calc(100%_-_56px))] flex-col gap-2 lg:gap-5 py-16 max-[700px]:w-[calc(100%_-_32px)] max-[700px]:py-10">
         <p className="text-[10px] font-black tracking-[.18em] text-brand uppercase">{eyebrow[locale]}</p>
-        <h1 className="max-w-5xl font-display text-[clamp(54px,8vw,112px)] leading-[.86] font-bold tracking-[-.045em] uppercase">{title[locale]}</h1>
+        <h1 className="max-w-5xl font-display text-4xl lg:text-[clamp(54px,8vw,112px)] leading-[1] lg:leading-[.86] font-bold tracking-[-.045em] uppercase">{title[locale]}</h1>
         <p className="max-w-2xl text-sm leading-6 text-foreground/58">{intro[locale]}</p>
         {draft && <p className="w-fit border border-brand/35 bg-brand/8 px-3 py-2 text-[9px] font-black tracking-[.08em] text-brand uppercase">{locale === "en" ? "Draft structure — final copy pending" : "Estructura preliminar — texto final pendiente"}</p>}
       </div>

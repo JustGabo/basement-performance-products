@@ -1,9 +1,12 @@
 import type { Metadata } from "next";
 import { redirect } from "next/navigation";
 
+import { privateMetadata } from "@/lib/seo";
+
 export const metadata: Metadata = {
-  title: "Sign in | Basement Performance Products",
+  title: "Sign in",
   description: "Access your Basement Performance Products customer account.",
+  ...privateMetadata,
 };
 
 export default async function SignInPage({ searchParams }: { searchParams: Promise<{ next?: string; error?: string }> }) {

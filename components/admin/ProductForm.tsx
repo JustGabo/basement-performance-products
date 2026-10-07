@@ -31,7 +31,7 @@ export type EditableProduct = {
   product_categories: Array<{ category_id: string }>;
 };
 
-const input = "min-h-12 w-full border border-foreground/18 bg-ink px-4 text-sm outline-none transition placeholder:text-foreground/25 focus:border-brand";
+const input = "min-h-12 w-full border border-foreground/18 bg-ink px-4 text-base outline-none transition placeholder:text-foreground/25 focus:border-brand";
 const label = "flex flex-col gap-2 text-[9px] font-black tracking-[.08em] text-foreground/65 uppercase";
 
 export function ProductForm({ product, categories }: { product?: EditableProduct; categories: Category[] }) {

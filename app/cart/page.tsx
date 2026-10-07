@@ -22,7 +22,7 @@ const copy = {
     back: "Seguir comprando", eyebrow: "Tu garaje", title: "Carrito", empty: "Tu carrito está vacío.",
     emptyCopy: "Agrega las piezas de fibra de carbono que definirán tu próximo proyecto.", shop: "Ver productos", remove: "Eliminar",
     decrease: "Disminuir cantidad", increase: "Aumentar cantidad", subtotal: "Subtotal", shipping: "Envío", calculated: "Calculado al pagar",
-    total: "Total estimado", clear: "Vaciar carrito", checkout: "Continuar al pago", secure: "Pago seguro e historial de órdenes vinculados a tu cuenta.",
+    total: "Total estimado", clear: "Vaciar carrito", checkout: "Continuar al pago", secure: "Pago seguro e historial de pedidos en tu cuenta.",
   },
 } as const;
 

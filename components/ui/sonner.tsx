@@ -25,6 +25,7 @@ const Toaster = ({ ...props }: ToasterProps) => {
           success: "!border-l-4 !border-l-brand",
           icon: "!text-brand",
           actionButton: "!h-8 !rounded-none !bg-brand !px-3 !text-[9px] !font-black !uppercase !text-black hover:!bg-[#d99f00]",
+          closeButton: "!border-brand/60 !bg-[#111212] !text-white hover:!bg-[#111212] hover:!text-brand",
         },
       }}
       icons={{

@@ -3,7 +3,7 @@
 import { createContext, useContext, useEffect, useMemo, useState, type ReactNode } from "react";
 import { toast } from "sonner";
 import type { CartLine, StoreProduct } from "@/lib/commerce";
-import { localCartStorage } from "@/lib/commerce/browser-cart";
+import { clearPendingCheckout, localCartStorage, pendingCheckoutExpired, readPendingCheckout } from "@/lib/commerce/browser-cart";
 
 export type CartItem = CartLine;
 
@@ -36,6 +36,44 @@ export function CartProvider({ children }: { children: ReactNode }) {
   useEffect(() => {
     if (hydrated) localCartStorage.write(items);
   }, [hydrated, items]);
+
+  useEffect(() => {
+    if (!hydrated) return;
+    const pending = readPendingCheckout();
+    if (!pending) return;
+    if (pendingCheckoutExpired(pending)) {
+      clearPendingCheckout();
+      return;
+    }
+
+    const controller = new AbortController();
+    let cancelled = false;
+    void fetch("/api/shopify/checkout/status", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ cartId: pending.cartId }),
+      signal: controller.signal,
+    })
+      .then(async (response) => {
+        if (!response.ok) return null;
+        return response.json() as Promise<{ completed?: boolean }>;
+      })
+      .then((data) => {
+        if (cancelled || !data?.completed) return;
+        setItems((current) => {
+          const next = current.filter((item) => !pending.productIds.includes(item.product.id));
+          localCartStorage.write(next);
+          return next;
+        });
+        clearPendingCheckout();
+      })
+      .catch(() => {});
+
+    return () => {
+      cancelled = true;
+      controller.abort();
+    };
+  }, [hydrated]);
 
   const value = useMemo<CartContextValue>(() => ({
     items,

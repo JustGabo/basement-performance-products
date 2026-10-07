@@ -5,7 +5,7 @@ import { deleteCategory, updateCategory } from "@/app/admin/actions";
 import { Dialog, DialogClose, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 
 type Category = { id: string; slug: string; name_en: string; name_es: string; description_en: string | null; description_es: string | null };
-const input = "min-h-12 w-full border border-foreground/18 bg-ink px-4 text-sm outline-none focus:border-brand";
+const input = "min-h-12 w-full border border-foreground/18 bg-ink px-4 text-base outline-none focus:border-brand";
 const label = "flex flex-col gap-2 text-[9px] font-black tracking-[.08em] text-foreground/65 uppercase";
 
 export function CategoryActions({ category }: { category: Category }) {

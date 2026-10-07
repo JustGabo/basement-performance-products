@@ -88,8 +88,8 @@ async function getHeroSlides() {
           nodes { id handle ${mediaFields} }
         }
       }
-    `, { type: "homepage_hero_slide" });
-    const slides = data.entries.nodes
+    `, { type: "homepage_hero_slide" }, { revalidate: 120 });
+    return data.entries.nodes
       .filter((node) => isEnabled(fieldsByKey(node).get("active")?.value))
       .sort((left, right) => sortOrder(left) - sortOrder(right))
       .flatMap((node) => {
@@ -99,9 +99,8 @@ async function getHeroSlides() {
         return [{ id: node.id, src: image.url, alt: fields.get("alt_text")?.value || image.altText || "Basement Performance Products featured build", objectPosition: fields.get("object_position")?.value || "center" }];
       })
       .slice(0, 10);
-    return slides.length ? slides : fallbackHeroSlides;
   } catch {
-    return fallbackHeroSlides;
+    return [];
   }
 }
 
@@ -114,8 +113,8 @@ export async function getVehicleBuilds(): Promise<BuildGalleryItem[]> {
           nodes { id handle ${mediaFields} }
         }
       }
-    `, { type: "vehicle_build" });
-    const builds = data.entries.nodes
+    `, { type: "vehicle_build" }, { revalidate: 120 });
+    return data.entries.nodes
       .filter((node) => isEnabled(fieldsByKey(node).get("active")?.value))
       .sort((left, right) => sortOrder(left) - sortOrder(right))
       .flatMap((node) => {
@@ -139,9 +138,8 @@ export async function getVehicleBuilds(): Promise<BuildGalleryItem[]> {
           featured: isEnabled(fields.get("featured")?.value),
         }];
       });
-    return builds.length ? builds : fallbackBuildGallery;
   } catch {
-    return fallbackBuildGallery;
+    return [];
   }
 }
 

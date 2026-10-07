@@ -1,3 +1,4 @@
+import type { Metadata } from "next";
 import Link from "next/link";
 import { ArrowLeft, LayoutDashboard, LogOut, MapPin, Package, ShieldCheck, UserRound } from "lucide-react";
 import { redirect } from "next/navigation";
@@ -7,6 +8,12 @@ import { BrandLogo } from "@/components/site/BrandLogo";
 import { ThemeToggle } from "@/components/theme/ThemeToggle";
 import { getCustomerSession } from "@/lib/shopify/customer-account";
 import { getShopifyCustomer } from "@/lib/shopify/customer-data";
+import { privateMetadata } from "@/lib/seo";
+
+export const metadata: Metadata = {
+  title: "Account",
+  ...privateMetadata,
+};
 
 export const dynamic = "force-dynamic";
 
