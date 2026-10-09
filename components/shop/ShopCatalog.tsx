@@ -10,7 +10,7 @@ import {
   SlidersHorizontal,
   X,
 } from "lucide-react";
-import { useDeferredValue, useMemo, useState } from "react";
+import { useDeferredValue, useMemo, useState, type ReactNode } from "react";
 import {
   BuildLayout,
   buildDisplay,
@@ -35,8 +35,19 @@ import {
 import { ProductCard } from "@/components/shop/ProductCard";
 import type { StoreProduct } from "@/lib/commerce";
 
-const productsPerPage = 8;
+const productsPerPage = 10;
 type SortOption = "newest" | "price-low" | "price-high" | "name";
+
+function FilterLabel({ children }: { children: ReactNode }) {
+  return (
+    <legend className="float-none mb-3 w-full p-0">
+      <span className="flex w-full items-center gap-3 text-[9px] leading-none font-black tracking-[.14em] text-foreground/45 uppercase">
+        {children}
+        <span className="h-px flex-1 bg-foreground/15" aria-hidden="true" />
+      </span>
+    </legend>
+  );
+}
 
 export function ShopCatalog({
   products,
@@ -192,9 +203,7 @@ export function ShopCatalog({
         )}
       </label>
       <fieldset className="flex flex-col gap-3">
-        <legend className="pb-3 text-[9px] font-black tracking-[.14em] text-foreground/45 uppercase">
-          Part type
-        </legend>
+        <FilterLabel>Part type</FilterLabel>
         <button
           className={`min-h-10 cursor-pointer border px-3 text-left text-[10px] font-bold uppercase transition ${partType === "all" ? "border-brand bg-brand text-black" : "border-foreground/20 hover:border-brand"}`}
           type="button"
@@ -223,10 +232,8 @@ export function ShopCatalog({
         </div>
       </fieldset>
       {vehicleMakes.length > 0 && (
-        <fieldset className="flex flex-col gap-3 border-t border-foreground/15 pt-6">
-          <legend className="pb-3 text-[9px] font-black tracking-[.14em] text-foreground/45 uppercase">
-            Vehicle make
-          </legend>
+        <fieldset className="flex flex-col gap-3">
+          <FilterLabel>Vehicle make</FilterLabel>
           <button
             className={`min-h-10 cursor-pointer border px-3 text-left text-[10px] font-bold uppercase transition ${vehicleMake === "all" ? "border-brand bg-brand text-black" : "border-foreground/20 hover:border-brand"}`}
             type="button"
@@ -254,10 +261,8 @@ export function ShopCatalog({
           </div>
         </fieldset>
       )}
-      <fieldset className="flex flex-col gap-3 border-t border-foreground/15 pt-6">
-        <legend className="pb-3 text-[9px] font-black tracking-[.14em] text-foreground/45 uppercase">
-          Availability
-        </legend>
+      <fieldset className="flex flex-col gap-3">
+        <FilterLabel>Availability</FilterLabel>
         <label className="flex cursor-pointer items-center gap-3 text-xs">
           <input
             className="size-4 accent-brand"

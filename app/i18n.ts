@@ -40,6 +40,8 @@ export const translations = {
       title: "Built in the Basement.",
       viewAll: "View all builds",
       view: "View build",
+      emptyTitle: "No builds listed",
+      emptyCopy: "Customer projects will show up here when they go live.",
     },
     journal: {
       kicker: "The journal",
@@ -58,6 +60,7 @@ export const translations = {
       emailLabel: "Email address",
       emailPlaceholder: "Enter your email",
       submit: "Subscribe",
+      follow: "Follow on Instagram",
     },
     footer: {
       motto: "Drive. Create. Repeat.",
@@ -117,6 +120,8 @@ export const translations = {
       title: "Hechos en el Basement.",
       viewAll: "Ver todos los proyectos",
       view: "Ver proyecto",
+      emptyTitle: "No hay proyectos",
+      emptyCopy: "Los proyectos de clientes aparecerán aquí cuando se publiquen.",
     },
     journal: {
       kicker: "La revista",
@@ -135,6 +140,7 @@ export const translations = {
       emailLabel: "Correo electrónico",
       emailPlaceholder: "Ingresa tu correo",
       submit: "Suscribirme",
+      follow: "Síguenos en Instagram",
     },
     footer: {
       motto: "Conduce. Crea. Repite.",
