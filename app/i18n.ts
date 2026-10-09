@@ -58,6 +58,7 @@ export const translations = {
       emailLabel: "Email address",
       emailPlaceholder: "Enter your email",
       submit: "Subscribe",
+      follow: "Follow on Instagram",
     },
     footer: {
       motto: "Drive. Create. Repeat.",
@@ -135,6 +136,7 @@ export const translations = {
       emailLabel: "Correo electrónico",
       emailPlaceholder: "Ingresa tu correo",
       submit: "Suscribirme",
+      follow: "Síguenos en Instagram",
     },
     footer: {
       motto: "Conduce. Crea. Repite.",
