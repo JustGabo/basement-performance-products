@@ -9,7 +9,7 @@ export async function requireAdmin() {
   const { data: claimsData, error: claimsError } = await supabase.auth.getClaims();
   const userId = claimsData?.claims?.sub;
 
-  if (claimsError || !userId) redirect("/sign-in?next=/admin");
+  if (claimsError || !userId) redirect("/manage/login?next=/manage/quotes");
 
   const { data: profile, error: profileError } = await supabase
     .from("profiles")
@@ -17,7 +17,9 @@ export async function requireAdmin() {
     .eq("id", userId)
     .maybeSingle();
 
-  if (profileError || profile?.role !== "admin") redirect("/account");
+  if (profileError || profile?.role !== "admin") {
+    redirect("/manage/login?error=This+account+does+not+have+admin+access.");
+  }
 
   const email = typeof claimsData.claims.email === "string" ? claimsData.claims.email : "Admin";
   const fullName = [profile.first_name, profile.last_name].filter(Boolean).join(" ") || email.split("@")[0];

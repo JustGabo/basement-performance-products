@@ -11,6 +11,7 @@ import { BrandLogo } from "@/components/site/BrandLogo";
 import { ThemeToggle } from "@/components/theme/ThemeToggle";
 import { formatProductPrice, type StoreProduct } from "@/lib/commerce";
 import { persistStoreLocale } from "@/lib/store-locale-client";
+import { ProductQuotePanel } from "@/components/quotes/ProductQuotePanel";
 
 type Locale = "en" | "es";
 
@@ -145,6 +146,8 @@ export function ProductDetail({ product, relatedProducts, initialLocale }: { pro
             </div>
             <button className="flex min-h-13 cursor-pointer items-center justify-between border border-brand px-5 text-[10px] font-black tracking-[.06em] text-brand uppercase transition hover:bg-brand hover:text-black disabled:opacity-40" type="button" onClick={() => { addToCart(); router.push("/checkout"); }} disabled={!inStock}>{t.buy}<ArrowRight size={18} /></button>
           </div>
+
+          <ProductQuotePanel product={product} locale={locale} />
 
           <button className="flex min-h-12 cursor-pointer items-center justify-center gap-2 border border-foreground/15 text-[10px] font-bold uppercase hover:border-brand hover:text-brand" type="button" onClick={share}><Share2 size={17} />{t.share}</button>
 
