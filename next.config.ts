@@ -24,11 +24,15 @@ const nextConfig: NextConfig = {
         hostname: "cdn.shopify.com",
         pathname: "/**",
       },
-      ...(supabaseHostname ? [{
-        protocol: "https" as const,
-        hostname: supabaseHostname,
-        pathname: "/storage/v1/object/public/**",
-      }] : []),
+      ...(supabaseHostname
+        ? [
+            {
+              protocol: "https" as const,
+              hostname: supabaseHostname,
+              pathname: "/storage/v1/object/public/**",
+            },
+          ]
+        : []),
     ],
   },
 };

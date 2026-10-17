@@ -1,4 +1,4 @@
-import type { Metadata } from "next";
+import type { Metadata, Viewport } from "next";
 import Script from "next/script";
 import { Geist, Oswald } from "next/font/google";
 import type { ReactNode } from "react";
@@ -8,6 +8,8 @@ import { Toaster } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { MarketProvider } from "@/components/market/MarketProvider";
 import { getMarketCountry } from "@/lib/commerce/market";
+import { PwaRegister } from "@/components/pwa/PwaRegister";
+import { pwaShortName, pwaThemeColor } from "@/lib/pwa/config";
 import { defaultOgImage, siteDescription, siteName, siteUrl } from "@/lib/seo";
 import "./globals.css";
 
@@ -19,6 +21,20 @@ export const metadata: Metadata = {
   title: { default: siteName, template: `%s | ${siteName}` },
   description: siteDescription,
   applicationName: siteName,
+  manifest: "/manifest.webmanifest",
+  appleWebApp: {
+    capable: true,
+    title: pwaShortName,
+    statusBarStyle: "black-translucent",
+  },
+  formatDetection: { telephone: false },
+  icons: {
+    icon: [
+      { url: "/icons/icon-192x192.png", sizes: "192x192", type: "image/png" },
+      { url: "/icons/icon-512x512.png", sizes: "512x512", type: "image/png" },
+    ],
+    apple: [{ url: "/icons/apple-touch-icon.png", sizes: "180x180", type: "image/png" }],
+  },
   openGraph: {
     type: "website",
     siteName,
@@ -33,6 +49,15 @@ export const metadata: Metadata = {
     description: siteDescription,
     images: [defaultOgImage],
   },
+};
+
+export const viewport: Viewport = {
+  themeColor: [
+    { media: "(prefers-color-scheme: light)", color: pwaThemeColor },
+    { media: "(prefers-color-scheme: dark)", color: pwaThemeColor },
+  ],
+  colorScheme: "dark light",
+  viewportFit: "cover",
 };
 
 export default async function RootLayout({ children }: { children: ReactNode }) {
@@ -51,6 +76,7 @@ export default async function RootLayout({ children }: { children: ReactNode }) 
             <Toaster position="bottom-right" closeButton />
           </TooltipProvider>
         </ThemeProvider>
+        <PwaRegister />
       </body>
     </html>
   );
