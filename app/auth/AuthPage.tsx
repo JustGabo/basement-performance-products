@@ -112,18 +112,18 @@ export default function AuthPage({
     }
   };
 
-  return <main className={`relative min-h-svh overflow-x-hidden bg-ink text-foreground transition-colors ${mode === "sign-in" ? "h-svh overflow-y-hidden max-[600px]:h-auto max-[600px]:overflow-y-auto" : ""}`}>
+  return <main className={`relative min-h-svh overflow-x-hidden bg-ink pb-[env(safe-area-inset-bottom,0px)] text-foreground transition-colors ${mode === "sign-in" ? "h-svh overflow-y-hidden max-[600px]:h-auto max-[600px]:overflow-y-auto" : ""}`}>
     <div aria-hidden="true" className="pointer-events-none fixed -top-[28vw] left-1/2 h-[55vw] w-[72vw] -translate-x-1/2 rounded-full bg-[radial-gradient(circle,rgba(243,180,2,.16),rgba(243,180,2,.035)_38%,transparent_70%)] blur-xl" />
     <div aria-hidden="true" className="pointer-events-none fixed inset-0 opacity-5 dark:opacity-20 [background-image:linear-gradient(rgba(128,128,128,.12)_1px,transparent_1px),linear-gradient(90deg,rgba(128,128,128,.12)_1px,transparent_1px)] [background-size:64px_64px] [mask-image:linear-gradient(to_bottom,transparent,black_35%,transparent)]" />
 
-    <header className="absolute top-0 left-1/2 z-20 flex h-[72px] w-[min(calc(100%_-_64px),1480px)] -translate-x-1/2 items-center justify-between max-[600px]:h-[58px] max-[600px]:w-[calc(100%_-_32px)]">
+    <header className="safe-top-header absolute top-0 left-1/2 z-20 flex h-[72px] w-[min(calc(100%_-_64px),1480px)] -translate-x-1/2 items-center justify-between max-[600px]:h-[58px] max-[600px]:w-[calc(100%_-_32px)]">
       <Link href="/" className="flex items-center gap-2.5 text-xs font-bold tracking-[.08em] text-foreground/65 uppercase transition hover:text-brand max-[600px]:text-[9px]"><ArrowLeft className="text-brand" size={17} />{t.back}</Link>
       <div className="flex items-center gap-2"><div className="flex items-center gap-1 rounded-full border border-foreground/15 bg-panel/70 p-1" role="group" aria-label={t.language}>
         {(["en", "es"] as const).map((item, index) => <span className="contents" key={item}>{index > 0 && <i className="not-italic text-foreground/30">/</i>}<button className={`h-7 min-w-8.5 cursor-pointer rounded-full border-0 text-[10px] font-extrabold ${locale === item ? "bg-brand text-black" : "bg-transparent text-foreground/45"}`} onClick={() => changeLocale(item)} aria-pressed={locale === item}>{item.toUpperCase()}</button></span>)}
       </div><ThemeToggle compact /></div>
     </header>
 
-    <section className="relative z-10 mx-auto flex min-h-svh w-[min(calc(100%_-_32px),500px)] flex-col items-center justify-center gap-3 pt-[72px] pb-7 [@media(max-height:820px)]:gap-0.5 [@media(max-height:820px)]:pt-[58px] [@media(max-height:820px)]:pb-3.5 max-[600px]:gap-1 max-[600px]:pt-[58px] max-[600px]:pb-5" aria-labelledby="auth-title">
+    <section className="safe-auth-section relative z-10 mx-auto flex min-h-svh w-[min(calc(100%_-_32px),500px)] flex-col items-center justify-center gap-3 pt-[72px] pb-7 [@media(max-height:820px)]:gap-0.5 [@media(max-height:820px)]:pt-[58px] [@media(max-height:820px)]:pb-3.5 max-[600px]:gap-1 max-[600px]:pt-[58px] max-[600px]:pb-5" aria-labelledby="auth-title">
       <Link href="/" className="block w-[clamp(235px,22vw,330px)] [@media(max-height:820px)]:w-[185px] max-[600px]:w-[205px]" aria-label="Basement Performance Products home">
         <Image className="h-auto w-full" src="/images/basement-auth-logo-transparent.png" alt="Basement Performance Products" width={1536} height={1024} priority />
       </Link>

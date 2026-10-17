@@ -38,6 +38,30 @@
   }
   * { box-sizing: border-box; }
   html { scroll-behavior: smooth; background: var(--color-ink); }
+  @media (display-mode: standalone) {
+    html {
+      padding-top: env(safe-area-inset-top, 0px);
+      padding-bottom: env(safe-area-inset-bottom, 0px);
+    }
+  }
+  @media not (display-mode: standalone) {
+    .safe-top-header {
+      padding-top: env(safe-area-inset-top, 0px);
+    }
+    .safe-auth-section {
+      padding-top: calc(72px + env(safe-area-inset-top, 0px));
+    }
+    @media (max-height: 820px) {
+      .safe-auth-section {
+        padding-top: calc(58px + env(safe-area-inset-top, 0px));
+      }
+    }
+    @media (max-width: 600px) {
+      .safe-auth-section {
+        padding-top: calc(58px + env(safe-area-inset-top, 0px));
+      }
+    }
+  }
   body {
     margin: 0;
     background: var(--color-ink);

@@ -57,7 +57,9 @@ export function AdminQuoteInbox({
   const productTotal = (activeConversation?.unit_price_cents ?? 0) * (activeConversation?.quantity ?? 1);
   const listOnly = !activeConversation;
   const listBackHref = backHref ?? listBasePath;
-  const shellClass = embedded ? QUOTE_EMBEDDED_SHELL_CLASS : "flex h-dvh flex-col overflow-hidden bg-ink text-foreground";
+  const shellClass = embedded
+    ? QUOTE_EMBEDDED_SHELL_CLASS
+    : "flex min-h-0 flex-1 flex-col overflow-hidden bg-ink text-foreground";
   const rowClass = "flex min-h-0 min-w-0 flex-1 flex-col lg:flex-row lg:items-stretch";
 
   const sidebar = (active: string | null, className?: string) => (
@@ -106,7 +108,9 @@ export function AdminQuoteInbox({
         </div>
 
         <section className="flex min-h-0 min-w-0 flex-1 flex-col bg-ink">
-          <header className="flex shrink-0 items-center gap-2 border-b border-foreground/10 bg-panel/50 px-3 py-3 pt-[max(0.75rem,env(safe-area-inset-top,0px))] lg:gap-3 lg:px-4 lg:pt-3">
+          <header
+            className={`flex shrink-0 items-center gap-2 border-b border-foreground/10 bg-panel/50 px-3 py-3 lg:gap-3 lg:px-4 ${embedded ? "" : "pt-[max(0.75rem,env(safe-area-inset-top,0px))]"} lg:pt-3`}
+          >
             <Link
               className="grid size-9 shrink-0 place-items-center text-foreground/70 hover:text-brand lg:hidden"
               href={listBackHref}
