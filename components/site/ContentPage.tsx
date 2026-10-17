@@ -46,7 +46,7 @@ export function ContentPage({ eyebrow, title, intro, sections, draft = false }: 
   };
 
   return <main className="min-h-svh bg-ink text-foreground transition-colors">
-    <header className="sticky top-0 z-30 border-b border-foreground/12 bg-ink/88 backdrop-blur-xl">
+    <header className="safe-top-header sticky top-0 z-30 border-b border-foreground/12 bg-ink/88 backdrop-blur-xl">
       <div className="mx-auto grid h-20 w-[min(1480px,calc(100%_-_56px))] grid-cols-[1fr_auto_1fr] items-center gap-5 max-[700px]:h-16 max-[700px]:w-[calc(100%_-_32px)]">
         <Link className="flex w-fit items-center gap-2 text-[10px] font-black tracking-[.08em] text-foreground/60 uppercase transition hover:text-brand" href="/"><ArrowLeft size={17} />{locale === "en" ? "Shop" : "Tienda"}</Link>
         <BrandLogo compact />

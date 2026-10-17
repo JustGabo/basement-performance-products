@@ -106,7 +106,7 @@ export function CheckoutClient({ prefill }: { prefill: CheckoutPrefill }) {
   };
 
   return <main className="min-h-svh bg-ink text-foreground transition-colors">
-    <header className="sticky top-0 z-40 border-b border-foreground/12 bg-ink/90 backdrop-blur-xl">
+    <header className="safe-top-header sticky top-0 z-40 border-b border-foreground/12 bg-ink/90 backdrop-blur-xl">
       <div className="mx-auto grid h-20 w-[min(1480px,calc(100%_-_56px))] grid-cols-[1fr_auto_1fr] items-center gap-6 max-[700px]:h-16 max-[700px]:w-[calc(100%_-_32px)]">
         <Link className="flex w-fit items-center gap-2 text-[9px] font-black tracking-[.08em] text-foreground/55 uppercase hover:text-brand" href="/cart"><ArrowLeft size={16} /><span className="max-[520px]:hidden">{t.back}</span></Link>
         <BrandLogo compact />

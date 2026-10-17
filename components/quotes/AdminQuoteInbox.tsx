@@ -109,7 +109,7 @@ export function AdminQuoteInbox({
 
         <section className="flex min-h-0 min-w-0 flex-1 flex-col bg-ink">
           <header
-            className={`flex shrink-0 items-center gap-2 border-b border-foreground/10 bg-panel/50 px-3 py-3 lg:gap-3 lg:px-4 ${embedded ? "" : "pt-[max(0.75rem,env(safe-area-inset-top,0px))]"} lg:pt-3`}
+            className="flex shrink-0 items-center gap-2 border-b border-foreground/10 bg-panel/50 px-3 py-3 lg:gap-3 lg:px-4"
           >
             <Link
               className="grid size-9 shrink-0 place-items-center text-foreground/70 hover:text-brand lg:hidden"

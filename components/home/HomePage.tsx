@@ -107,7 +107,7 @@ export function HomePage({ products, catalogUnavailable = false, heroSlides, bui
   }, [heroSlides.length]);
 
   return <main id="top" className="overflow-hidden bg-ink text-foreground transition-colors">
-    <header className="fixed top-0 left-0 z-30 grid h-21 w-full grid-cols-[1fr_auto_1fr] [grid-template-areas:'nav_logo_tools'] items-center gap-9 border-b border-foreground/12 bg-ink/88 px-[max(28px,calc((100vw-1480px)/2))] shadow-xl backdrop-blur-xl max-[1000px]:[grid-template-areas:'menu_logo_tools'] max-[700px]:h-18 max-[700px]:gap-4 max-[700px]:px-5">
+    <header className="safe-top-header fixed top-0 left-0 z-30 grid min-h-21 w-full grid-cols-[1fr_auto_1fr] [grid-template-areas:'nav_logo_tools'] items-center gap-9 border-b border-foreground/12 bg-ink/88 px-[max(28px,calc((100vw-1480px)/2))] shadow-xl backdrop-blur-xl max-[1000px]:[grid-template-areas:'menu_logo_tools'] max-[700px]:min-h-18 max-[700px]:gap-4 max-[700px]:px-5">
       <Logo />
       <nav className="[grid-area:nav] flex gap-8 text-[10px] font-bold uppercase max-[1000px]:hidden" aria-label="Main navigation"><Link className="transition hover:text-brand" href="/shop">{t.nav.shop}</Link><Link className="transition hover:text-brand" href="/builds">{t.nav.builds}</Link><Link className="transition hover:text-brand" href="/about">{t.nav.about}</Link></nav>
       <div className="[grid-area:tools] flex items-center justify-self-end gap-4 max-[1000px]:hidden"><LocaleSwitch locale={locale} label={t.language} onChange={changeLocale} /><ThemeToggle compact /><Link className="p-1 transition hover:text-brand" aria-label={t.header.search} href="/shop?focus=search"><Search size={20} /></Link><Link className="p-1" aria-label={t.header.contact} href="/account"><UserRound size={20} /></Link><CartDrawer locale={locale} /></div>
@@ -118,7 +118,7 @@ export function HomePage({ products, catalogUnavailable = false, heroSlides, bui
     <section className="relative min-h-dvh overflow-hidden border-b border-foreground/10 text-white" aria-label={t.hero.label}>
       <div className="absolute inset-0">{heroSlides.map((slide, index) => <div className={`absolute inset-0 transition-opacity duration-700 ${index === activeSlide ? "opacity-100" : "opacity-0"}`} aria-hidden={index !== activeSlide} key={slide.id}><Image className="origin-top scale-[1.16] object-cover max-[700px]:origin-center max-[700px]:scale-100" src={slide.src} alt={index === activeSlide ? slide.alt : ""} fill preload={index === 0} sizes="100vw" style={{ objectPosition: slide.objectPosition }} unoptimized={isShopifyCdnImage(slide.src)} /></div>)}</div>
       <div className="absolute inset-0 bg-[linear-gradient(90deg,rgba(2,3,3,.96)_0%,rgba(2,3,3,.7)_30%,rgba(2,3,3,.08)_68%)] max-[700px]:bg-[linear-gradient(0deg,rgba(2,3,3,.98)_6%,rgba(2,3,3,.62)_66%,rgba(2,3,3,.18))]" />
-      <div className={`${shell} relative z-10 flex min-h-dvh items-start pt-28 max-[700px]:items-end max-[700px]:pt-18 max-[700px]:pb-16`}>
+      <div className={`${shell} relative z-10 flex min-h-dvh items-start pt-[calc(7rem+env(safe-area-inset-top,0px))] max-[700px]:items-end max-[700px]:pt-[calc(4.5rem+env(safe-area-inset-top,0px))] max-[700px]:pb-16`}>
         <div className="flex w-full flex-col gap-6 max-[700px]:gap-4">
           <div className="flex flex-col gap-5 max-[700px]:gap-3">
             <p className="flex items-center gap-3 text-[11px] font-black tracking-[.18em] text-brand uppercase before:h-px before:w-8 before:bg-brand max-[700px]:text-[8px] max-[700px]:tracking-[.12em]">{t.hero.eyebrow}</p>
