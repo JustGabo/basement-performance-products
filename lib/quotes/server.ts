@@ -41,6 +41,10 @@ export type QuoteConversationRow = {
   invoice_url: string | null;
   offer_shipping_cents: number | null;
   offer_sent_at: string | null;
+  customer_last_read_at: string | null;
+  staff_last_read_at: string | null;
+  last_customer_message_at: string | null;
+  last_staff_side_message_at: string | null;
   created_at: string;
   updated_at: string;
 };
@@ -237,6 +241,22 @@ export async function submitIntake(
     body: t.botAfterIntake,
   });
   return updated;
+}
+
+export async function markCustomerRead(conversationId: string) {
+  const { error } = await admin()
+    .from("quote_conversations")
+    .update({ customer_last_read_at: new Date().toISOString() })
+    .eq("id", conversationId);
+  if (error) throw new Error(error.message);
+}
+
+export async function markStaffRead(conversationId: string) {
+  const { error } = await admin()
+    .from("quote_conversations")
+    .update({ staff_last_read_at: new Date().toISOString() })
+    .eq("id", conversationId);
+  if (error) throw new Error(error.message);
 }
 
 export async function sendCustomerMessage(conversation: QuoteConversationRow, body: string) {

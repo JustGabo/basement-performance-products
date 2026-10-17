@@ -2,6 +2,7 @@ import Link from "next/link";
 import { AdminQuoteInbox } from "@/components/quotes/AdminQuoteInbox";
 import { QuoteConversationShell } from "@/components/quotes/QuoteConversationShell";
 import type { AdminQuoteListItem } from "@/components/quotes/AdminQuoteListSidebar";
+import { adminQuoteListSelect, mapAdminQuoteListRow } from "@/lib/quotes/admin-list";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { listMessages } from "@/lib/quotes/server";
 import { isQuoteStaffEmail } from "@/lib/quotes/staff-access";
@@ -32,7 +33,7 @@ export default async function AccountQuoteConversationPage({
     const [{ data: quotesData }, { data: conversation, error }] = await Promise.all([
       admin
         .from("quote_conversations")
-        .select("id, product_name, customer_name, status")
+        .select(adminQuoteListSelect)
         .order("created_at", { ascending: false })
         .limit(100),
       admin.from("quote_conversations").select("*").eq("id", id).maybeSingle(),
@@ -50,7 +51,7 @@ export default async function AccountQuoteConversationPage({
     }
 
     const messages = (await listMessages(id)) as QuoteMessage[];
-    const quotes = (quotesData ?? []) as AdminQuoteListItem[];
+    const quotes = (quotesData ?? []).map((row) => mapAdminQuoteListRow(row as AdminQuoteListItem));
     const lang = conversation.locale === "es" ? "es" : "en";
     const fullscreenHref = `/manage/quotes/${conversation.id}`;
 
@@ -62,6 +63,7 @@ export default async function AccountQuoteConversationPage({
           messages={messages}
           hasShopifyAdmin={hasShopifyAdminConfig()}
           embedded
+          locale={locale}
           listBasePath="/account/quotes"
           backHref={listHref}
           fullscreenHref={fullscreenHref}

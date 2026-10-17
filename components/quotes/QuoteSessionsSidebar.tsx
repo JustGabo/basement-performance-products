@@ -1,10 +1,12 @@
 "use client";
 
 import Link from "next/link";
+import { useCallback, useEffect, useState } from "react";
 import { ArrowLeft } from "lucide-react";
 import { cn } from "cn";
 import type { SavedQuoteSession } from "@/lib/quotes/client-sessions";
 import type { QuoteLocale } from "@/lib/quotes/copy";
+import { QuoteUnreadDot } from "@/components/quotes/QuoteUnreadDot";
 
 function statusLabel(status: string | undefined, locale: QuoteLocale) {
   switch (status) {
@@ -35,6 +37,43 @@ export function QuoteSessionsSidebar({
   className?: string;
 }) {
   const title = locale === "es" ? "Tus cotizaciones" : "Your quotes";
+  const [unread, setUnread] = useState<Record<string, boolean>>({});
+
+  const refreshUnread = useCallback(async () => {
+    if (sessions.length === 0) {
+      setUnread({});
+      return;
+    }
+    try {
+      const response = await fetch("/api/quotes/read-status", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          sessions: sessions.map((session) => ({ id: session.id, token: session.token })),
+        }),
+      });
+      const data = (await response.json()) as { unread?: Record<string, boolean> };
+      setUnread(data.unread ?? {});
+    } catch {
+      /* ignore */
+    }
+  }, [sessions]);
+
+  useEffect(() => {
+    void refreshUnread();
+  }, [refreshUnread]);
+
+  useEffect(() => {
+    const onVisible = () => {
+      if (document.visibilityState === "visible") void refreshUnread();
+    };
+    document.addEventListener("visibilitychange", onVisible);
+    const timer = window.setInterval(() => void refreshUnread(), 20_000);
+    return () => {
+      document.removeEventListener("visibilitychange", onVisible);
+      window.clearInterval(timer);
+    };
+  }, [refreshUnread]);
 
   return (
     <aside
@@ -68,6 +107,7 @@ export function QuoteSessionsSidebar({
         ) : (
           sessions.map((session) => {
             const active = Boolean(activeId) && session.id === activeId;
+            const hasUnread = unread[session.id] && !active;
             return (
               <Link
                 key={session.id}
@@ -78,7 +118,12 @@ export function QuoteSessionsSidebar({
                 }`}
                 href={`${basePath}/${session.id}?token=${encodeURIComponent(session.token)}${locale === "es" ? "&lang=es" : ""}`}
               >
-                <span className="line-clamp-2 text-[11px] font-bold leading-4 uppercase">{session.productName}</span>
+                <span className="flex items-start gap-2">
+                  <span className="line-clamp-2 min-w-0 flex-1 text-[11px] font-bold leading-4 uppercase">
+                    {session.productName}
+                  </span>
+                  {hasUnread ? <QuoteUnreadDot className="mt-1" /> : null}
+                </span>
                 <span className="text-[10px] text-foreground/40">{statusLabel(session.status, locale)}</span>
               </Link>
             );

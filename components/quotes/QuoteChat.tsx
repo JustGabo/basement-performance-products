@@ -3,7 +3,7 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import { Loader2 } from "lucide-react";
 import { QuoteChatComposer } from "@/components/quotes/QuoteChatComposer";
-import { QuoteMessageThread } from "@/components/quotes/QuoteMessageThread";
+import { QuoteChatThreadPane } from "@/components/quotes/QuoteChatThreadPane";
 import { QuoteIntakeFields } from "@/components/quotes/quote-form-fields";
 import { quoteCopy, type QuoteLocale } from "@/lib/quotes/copy";
 import type { QuoteMessage } from "@/lib/quotes/message-types";
@@ -217,14 +217,13 @@ export function QuoteChat({
   if (layout === "full") {
     return (
       <div className="flex min-h-0 flex-1 flex-col">
-        <div className="quote-chat-scroll min-h-0 flex-1 overflow-y-auto bg-linear-to-b from-panel/30 to-ink px-3 py-4 lg:px-4">
-          <QuoteMessageThread
-            messages={messages}
-            locale={locale}
-            perspective="customer"
-            emptyLabel={t.sending}
-          />
-        </div>
+        <QuoteChatThreadPane
+          className="quote-chat-scroll min-h-0 flex-1 overflow-y-auto bg-linear-to-b from-panel/30 to-ink px-3 py-4 lg:px-4"
+          messages={messages}
+          locale={locale}
+          perspective="customer"
+          emptyLabel={t.sending}
+        />
 
         <div className="shrink-0 border-t border-foreground/10 bg-panel/55 px-3 pt-3 pb-[max(1.25rem,env(safe-area-inset-bottom,0px))] lg:px-4 lg:py-3">
           {error && <p className="mb-2 px-1 text-xs text-red-400">{error}</p>}
@@ -236,14 +235,13 @@ export function QuoteChat({
 
   return (
     <div className="flex flex-col gap-4">
-      <div className="quote-chat-scroll flex max-h-[min(52vh,420px)] flex-col gap-4 overflow-y-auto rounded-xl bg-linear-to-b from-panel/50 to-ink/80 p-4">
-        <QuoteMessageThread
-          messages={messages}
-          locale={locale}
-          perspective="customer"
-          emptyLabel={t.sending}
-        />
-      </div>
+      <QuoteChatThreadPane
+        className="quote-chat-scroll flex max-h-[min(52vh,420px)] flex-col gap-4 overflow-y-auto rounded-xl bg-linear-to-b from-panel/50 to-ink/80 p-4"
+        messages={messages}
+        locale={locale}
+        perspective="customer"
+        emptyLabel={t.sending}
+      />
 
       {error && <p className="text-xs text-red-400">{error}</p>}
       <div className="flex flex-col gap-3">{composer}</div>

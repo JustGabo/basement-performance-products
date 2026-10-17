@@ -19,6 +19,9 @@ export function QuoteListShell({
 
   useEffect(() => {
     setSessions(listQuoteSessions());
+    const onFocus = () => setSessions(listQuoteSessions());
+    window.addEventListener("focus", onFocus);
+    return () => window.removeEventListener("focus", onFocus);
   }, []);
 
   const shell = (

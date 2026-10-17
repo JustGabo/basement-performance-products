@@ -1,5 +1,6 @@
 "use client";
 
+import { Suspense } from "react";
 import Link from "next/link";
 import { ArrowLeft, Maximize2 } from "lucide-react";
 import { AdminFeedback } from "@/components/admin/AdminFeedback";
@@ -37,6 +38,7 @@ export function AdminQuoteInbox({
   backHref,
   fullscreenHref,
   showShopLink = true,
+  locale = "en",
 }: {
   quotes: AdminQuoteListItem[];
   activeConversation: ActiveConversation | null;
@@ -48,26 +50,38 @@ export function AdminQuoteInbox({
   backHref?: string;
   fullscreenHref?: string | null;
   showShopLink?: boolean;
+  locale?: QuoteLocale;
 }) {
   const activeId = activeConversation?.id ?? null;
-  const locale: QuoteLocale = activeConversation?.locale === "es" ? "es" : "en";
+  const chatLocale: QuoteLocale = activeConversation?.locale === "es" ? "es" : locale;
   const productTotal = (activeConversation?.unit_price_cents ?? 0) * (activeConversation?.quantity ?? 1);
   const listOnly = !activeConversation;
   const listBackHref = backHref ?? listBasePath;
   const shellClass = embedded ? QUOTE_EMBEDDED_SHELL_CLASS : "flex h-dvh flex-col overflow-hidden bg-ink text-foreground";
   const rowClass = "flex min-h-0 min-w-0 flex-1 flex-col lg:flex-row lg:items-stretch";
 
+  const sidebar = (active: string | null, className?: string) => (
+    <Suspense
+      fallback={
+        <aside className="flex h-full min-h-0 w-full shrink-0 flex-col border-foreground/10 bg-panel/40 lg:w-[360px] lg:border-r" />
+      }
+    >
+      <AdminQuoteListSidebar
+        quotes={quotes}
+        activeId={active}
+        showShopLink={showShopLink}
+        basePath={listBasePath}
+        className={className}
+        locale={locale}
+      />
+    </Suspense>
+  );
+
   if (listOnly) {
     return (
       <div className={shellClass}>
         <div className={rowClass}>
-          <AdminQuoteListSidebar
-            quotes={quotes}
-            activeId={null}
-            showShopLink={showShopLink}
-            basePath={listBasePath}
-            className="h-full max-h-none w-full lg:flex"
-          />
+          {sidebar(null, "h-full max-h-none w-full lg:flex")}
           <section className="hidden min-h-0 flex-1 flex-col items-center justify-center gap-2 px-6 text-center lg:flex">
             <p className="text-[10px] font-black tracking-[.14em] text-brand uppercase">International quotes</p>
             <h1 className="font-display text-3xl font-bold uppercase">Select a conversation</h1>
@@ -88,17 +102,11 @@ export function AdminQuoteInbox({
     <div className={shellClass}>
       <div className={rowClass}>
         <div className="hidden min-h-0 self-stretch lg:flex lg:h-full lg:w-[360px]">
-          <AdminQuoteListSidebar
-            quotes={quotes}
-            activeId={activeId}
-            showShopLink={showShopLink}
-            basePath={listBasePath}
-            className="h-full w-full"
-          />
+          {sidebar(activeId, "h-full w-full")}
         </div>
 
         <section className="flex min-h-0 min-w-0 flex-1 flex-col bg-ink">
-          <header className="flex shrink-0 items-center gap-2 border-b border-foreground/10 bg-panel/50 px-3 py-3 lg:gap-3 lg:px-4">
+          <header className="flex shrink-0 items-center gap-2 border-b border-foreground/10 bg-panel/50 px-3 py-3 pt-[max(0.75rem,env(safe-area-inset-top,0px))] lg:gap-3 lg:px-4 lg:pt-3">
             <Link
               className="grid size-9 shrink-0 place-items-center text-foreground/70 hover:text-brand lg:hidden"
               href={listBackHref}
@@ -129,7 +137,7 @@ export function AdminQuoteInbox({
             ) : null}
             <AdminQuoteOfferDialog
               conversationId={activeConversation.id}
-              locale={locale}
+              locale={chatLocale}
               productTotalCents={productTotal}
               currency={activeConversation.currency}
               defaultShippingDollars={defaultShipping}
@@ -147,7 +155,7 @@ export function AdminQuoteInbox({
 
           <AdminQuoteChatPanel
             conversationId={activeConversation.id}
-            locale={locale}
+            locale={chatLocale}
             messages={messages}
             layout="full"
             redirectBase={listBasePath}

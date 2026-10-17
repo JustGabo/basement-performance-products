@@ -1,8 +1,10 @@
 "use client";
 
+import { useEffect } from "react";
 import { useRouter } from "next/navigation";
+import { markQuoteStaffRead } from "@/app/manage/quotes/actions";
 import { QuoteChatComposer } from "@/components/quotes/QuoteChatComposer";
-import { QuoteMessageThread } from "@/components/quotes/QuoteMessageThread";
+import { QuoteChatThreadPane } from "@/components/quotes/QuoteChatThreadPane";
 import { sendStaffReply } from "@/app/manage/quotes/actions";
 import type { QuoteLocale } from "@/lib/quotes/copy";
 import type { QuoteMessage } from "@/lib/quotes/message-types";
@@ -26,6 +28,11 @@ export function AdminQuoteChatPanel({
     router.refresh();
   });
 
+  const lastMessageId = messages.at(-1)?.id ?? null;
+  useEffect(() => {
+    void markQuoteStaffRead(conversationId);
+  }, [conversationId, lastMessageId, messages.length]);
+
   const placeholder = locale === "es" ? "Escribe un mensaje al cliente…" : "Write a message to the customer…";
   const sendLabel = locale === "es" ? "Enviar" : "Send";
 
@@ -48,14 +55,13 @@ export function AdminQuoteChatPanel({
   if (layout === "full") {
     return (
       <div className="flex min-h-0 flex-1 flex-col">
-        <div className="quote-chat-scroll min-h-0 flex-1 overflow-y-auto bg-linear-to-b from-panel/30 to-ink px-3 py-4 lg:px-4">
-          <QuoteMessageThread
-            messages={messages}
-            locale={locale}
-            perspective="staff"
-            emptyLabel={locale === "es" ? "Sin mensajes todavía." : "No messages yet."}
-          />
-        </div>
+        <QuoteChatThreadPane
+          className="quote-chat-scroll min-h-0 flex-1 overflow-y-auto bg-linear-to-b from-panel/30 to-ink px-3 py-4 lg:px-4"
+          messages={messages}
+          locale={locale}
+          perspective="staff"
+          emptyLabel={locale === "es" ? "Sin mensajes todavía." : "No messages yet."}
+        />
         {footer}
       </div>
     );
@@ -63,9 +69,12 @@ export function AdminQuoteChatPanel({
 
   return (
     <div className="flex flex-col gap-4">
-      <div className="quote-chat-scroll flex max-h-[min(52vh,420px)] flex-col overflow-y-auto rounded-xl bg-linear-to-b from-panel/50 to-ink/80 p-4">
-        <QuoteMessageThread messages={messages} locale={locale} perspective="staff" />
-      </div>
+      <QuoteChatThreadPane
+        className="quote-chat-scroll flex max-h-[min(52vh,420px)] flex-col overflow-y-auto rounded-xl bg-linear-to-b from-panel/50 to-ink/80 p-4"
+        messages={messages}
+        locale={locale}
+        perspective="staff"
+      />
       {composer}
     </div>
   );

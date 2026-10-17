@@ -3,6 +3,7 @@ import { listMessages } from "@/lib/quotes/server";
 import { hasShopifyAdminConfig } from "@/lib/shopify/admin";
 import { AdminQuoteInbox } from "@/components/quotes/AdminQuoteInbox";
 import type { AdminQuoteListItem } from "@/components/quotes/AdminQuoteListSidebar";
+import { adminQuoteListSelect, mapAdminQuoteListRow } from "@/lib/quotes/admin-list";
 import type { QuoteMessage } from "@/lib/quotes/message-types";
 
 export default async function ManageQuoteDetailPage({
@@ -18,11 +19,11 @@ export default async function ManageQuoteDetailPage({
 
   const { data: quotesData } = await admin
     .from("quote_conversations")
-    .select("id, product_name, customer_name, status")
+    .select(adminQuoteListSelect)
     .order("created_at", { ascending: false })
     .limit(100);
 
-  const quotes = (quotesData ?? []) as AdminQuoteListItem[];
+  const quotes = (quotesData ?? []).map((row) => mapAdminQuoteListRow(row as AdminQuoteListItem));
 
   const { data: conversation, error } = await admin
     .from("quote_conversations")

@@ -6,7 +6,7 @@ import { assertQuoteStaffWriter, quoteStaffRedirectBase } from "@/lib/quotes/sta
 import { sendQuoteReadyEmail } from "@/lib/email/resend";
 import { buildQuoteReadyEmail } from "@/lib/quotes/offer-email";
 import type { QuoteLocale } from "@/lib/quotes/copy";
-import { insertMessage } from "@/lib/quotes/server";
+import { insertMessage, markStaffRead } from "@/lib/quotes/server";
 import { createInternationalDraftOrder, hasShopifyAdminConfig } from "@/lib/shopify/admin";
 
 function siteUrl() {
@@ -211,4 +211,14 @@ export async function sendStaffReply(formData: FormData) {
   revalidatePath(`/manage/quotes/${conversationId}`);
   revalidatePath(`/quotes/${conversationId}`);
   redirect(destination(`${redirectBase}/${conversationId}`, "saved", "Reply sent."));
+}
+
+export async function markQuoteStaffRead(conversationId: string) {
+  if (!conversationId) return;
+  await assertQuoteStaffWriter();
+  await markStaffRead(conversationId);
+  revalidatePath("/manage/quotes");
+  revalidatePath("/account/quotes");
+  revalidatePath(`/manage/quotes/${conversationId}`);
+  revalidatePath(`/account/quotes/${conversationId}`);
 }

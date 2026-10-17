@@ -2,6 +2,7 @@ import Link from "next/link";
 import { AdminQuoteInbox } from "@/components/quotes/AdminQuoteInbox";
 import { QuoteListShell } from "@/components/quotes/QuoteListShell";
 import type { AdminQuoteListItem } from "@/components/quotes/AdminQuoteListSidebar";
+import { adminQuoteListSelect, mapAdminQuoteListRow } from "@/lib/quotes/admin-list";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { isQuoteStaffEmail } from "@/lib/quotes/staff-access";
 import { hasShopifyAdminConfig } from "@/lib/shopify/admin";
@@ -24,10 +25,10 @@ export default async function AccountQuotesPage({
     const admin = createAdminClient();
     const { data } = await admin
       .from("quote_conversations")
-      .select("id, product_name, customer_name, status")
+      .select(adminQuoteListSelect)
       .order("created_at", { ascending: false })
       .limit(100);
-    staffQuotes = (data ?? []) as AdminQuoteListItem[];
+    staffQuotes = (data ?? []).map((row) => mapAdminQuoteListRow(row as AdminQuoteListItem));
   }
 
   return (
@@ -63,6 +64,7 @@ export default async function AccountQuotesPage({
           messages={[]}
           hasShopifyAdmin={hasShopifyAdminConfig()}
           embedded
+          locale={locale}
           listBasePath="/account/quotes"
           backHref={locale === "es" ? "/account/quotes?lang=es" : "/account/quotes"}
           showShopLink={false}

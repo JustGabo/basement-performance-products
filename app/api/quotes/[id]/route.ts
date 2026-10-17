@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
-import { getConversationForToken, listMessages } from "@/lib/quotes/server";
+import { getConversationForToken, listMessages, markCustomerRead } from "@/lib/quotes/server";
+import { hasCustomerUnread } from "@/lib/quotes/read-state";
 
 export async function GET(
   request: Request,
@@ -17,7 +18,10 @@ export async function GET(
       return NextResponse.json({ error: "Quote not found." }, { status: 404 });
     }
     const messages = await listMessages(conversation.id);
+    const unreadBeforeRead = hasCustomerUnread(conversation);
+    await markCustomerRead(conversation.id);
     return NextResponse.json({
+      unread: unreadBeforeRead,
       conversation: {
         id: conversation.id,
         status: conversation.status,

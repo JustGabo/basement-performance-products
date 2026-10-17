@@ -33,8 +33,8 @@ export default async function AccountLayout({ children }: { children: ReactNode 
   const email = customer.emailAddress?.emailAddress || "Shopify customer";
   const fullName = customer.displayName || email.split("@")[0];
 
-  return <main className="flex min-h-svh flex-col overflow-x-hidden bg-ink text-foreground transition-colors">
-    <header className="sticky top-0 z-30 border-b border-foreground/12 bg-ink/88 backdrop-blur-xl">
+  return <main className="flex min-h-svh flex-col overflow-x-hidden bg-ink pb-[env(safe-area-inset-bottom,0px)] text-foreground transition-colors">
+    <header className="sticky top-0 z-30 border-b border-foreground/12 bg-ink/88 pt-[env(safe-area-inset-top,0px)] backdrop-blur-xl">
       <div className="mx-auto grid h-20 w-[min(1480px,calc(100%_-_56px))] grid-cols-[1fr_auto_1fr] items-center gap-5 max-[700px]:h-16 max-[700px]:w-[calc(100%_-_32px)]">
         <Link className="flex items-center gap-2 text-[10px] font-black tracking-[.08em] text-foreground/60 uppercase transition hover:text-brand" href="/"><ArrowLeft size={17} />Shop</Link>
         <BrandLogo compact />

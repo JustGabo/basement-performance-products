@@ -2,16 +2,17 @@ import { assertQuoteStaffWriter } from "@/lib/quotes/staff-access";
 import { hasShopifyAdminConfig } from "@/lib/shopify/admin";
 import { AdminQuoteInbox } from "@/components/quotes/AdminQuoteInbox";
 import type { AdminQuoteListItem } from "@/components/quotes/AdminQuoteListSidebar";
+import { adminQuoteListSelect, mapAdminQuoteListRow } from "@/lib/quotes/admin-list";
 
 export default async function ManageQuotesPage() {
   const admin = await assertQuoteStaffWriter();
   const { data, error } = await admin
     .from("quote_conversations")
-    .select("id, product_name, customer_name, status")
+    .select(adminQuoteListSelect)
     .order("created_at", { ascending: false })
     .limit(100);
 
-  const quotes = (data ?? []) as AdminQuoteListItem[];
+  const quotes = (data ?? []).map((row) => mapAdminQuoteListRow(row as AdminQuoteListItem));
 
   if (error) {
     return (
