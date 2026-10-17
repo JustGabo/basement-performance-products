@@ -10,7 +10,7 @@ import {
 
 export default function manifest(): MetadataRoute.Manifest {
   return {
-    id: "/quotes-inbox",
+    id: "/quotes",
     name: pwaDisplayName,
     short_name: pwaShortName,
     description: pwaDescription,
@@ -45,7 +45,7 @@ export default function manifest(): MetadataRoute.Manifest {
       {
         name: "Shipping quotes",
         short_name: "Quotes",
-        url: "/quotes-inbox",
+        url: "/quotes?tab=pending",
         icons: [{ src: "/icons/icon-192x192.png", sizes: "192x192", type: "image/png" }],
       },
       {

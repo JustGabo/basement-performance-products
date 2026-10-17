@@ -1,6 +1,16 @@
 import type { Metadata } from "next";
 import Link from "next/link";
-import { ArrowLeft, LayoutDashboard, LogOut, MapPin, MessageSquare, Package, ShieldCheck, UserRound } from "lucide-react";
+import {
+  ArrowLeft,
+  Inbox,
+  LayoutDashboard,
+  LogOut,
+  MapPin,
+  MessageSquare,
+  Package,
+  ShieldCheck,
+  UserRound,
+} from "lucide-react";
 import { redirect } from "next/navigation";
 import type { ReactNode } from "react";
 import { CartDrawer } from "@/components/cart/CartDrawer";
@@ -9,6 +19,7 @@ import { ThemeToggle } from "@/components/theme/ThemeToggle";
 import { getCustomerSession } from "@/lib/shopify/customer-account";
 import { getShopifyCustomer } from "@/lib/shopify/customer-data";
 import { privateMetadata } from "@/lib/seo";
+import { cookies } from "next/headers";
 
 export const metadata: Metadata = {
   title: "Account",
@@ -17,7 +28,9 @@ export const metadata: Metadata = {
 
 export const dynamic = "force-dynamic";
 
-const navigation = [
+type NavItem = { href: string; label: string; icon: typeof LayoutDashboard };
+
+const baseNavigation: NavItem[] = [
   { href: "/account", label: "Overview", icon: LayoutDashboard },
   { href: "/account/orders", label: "Orders", icon: Package },
   { href: "/account/quotes", label: "Shipping quotes", icon: MessageSquare },
@@ -25,12 +38,31 @@ const navigation = [
   { href: "/account/profile", label: "Profile & security", icon: ShieldCheck },
 ];
 
+function accountNavigation(locale: "en" | "es"): NavItem[] {
+  const viewQuotes: NavItem = {
+    href: locale === "es" ? "/quotes?lang=es" : "/quotes",
+    label: locale === "es" ? "Ver cotizaciones" : "View quotes",
+    icon: Inbox,
+  };
+  return [
+    baseNavigation[0],
+    baseNavigation[1],
+    baseNavigation[2],
+    viewQuotes,
+    baseNavigation[3],
+    baseNavigation[4],
+  ];
+}
+
 export default async function AccountLayout({ children }: { children: ReactNode }) {
   if (!await getCustomerSession()) redirect("/sign-in");
   const customer = await getShopifyCustomer({ orders: 1, addresses: 1 });
   if (!customer) redirect("/sign-in");
   const email = customer.emailAddress?.emailAddress || "Shopify customer";
   const fullName = customer.displayName || email.split("@")[0];
+  const cookieStore = await cookies();
+  const locale = cookieStore.get("basement-locale")?.value === "es" ? "es" : "en";
+  const navigation = accountNavigation(locale);
 
   return <main className="flex min-h-svh flex-col overflow-x-hidden bg-ink pb-[env(safe-area-inset-bottom,0px)] text-foreground transition-colors">
     <header className="safe-top-header sticky top-0 z-30 border-b border-foreground/12 bg-ink/88 backdrop-blur-xl">

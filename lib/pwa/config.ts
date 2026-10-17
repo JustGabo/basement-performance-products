@@ -8,11 +8,8 @@ export const pwaDescription =
 export const pwaThemeColor = "#f3b402";
 export const pwaBackgroundColor = "#080909";
 
-/**
- * PWA launch URL. Use `/quotes-inbox` so iOS/Android home-screen bookmarks open the quote inbox
- * (pending tab). Staff can also bookmark that path directly in Safari before “Add to Home Screen”.
- */
-export const pwaStartUrl = "/quotes-inbox";
-export const pwaQuotesInboxPath = "/account/quotes?tab=pending";
+/** PWA launch URL — full-screen quote list at `/quotes` (admin inbox or customer sessions). */
+export const pwaStartUrl = "/quotes";
+export const pwaQuotesInboxPath = "/quotes";
 
 export const pwaDisplayName = siteName;

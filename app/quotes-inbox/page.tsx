@@ -1,6 +1,6 @@
 import { redirect } from "next/navigation";
 
-/** Short entry URL for “Add to Home Screen” — opens the staff/customer quote inbox (pending tab). */
+/** Legacy alias — prefer `/quotes` or `/quotes/inbox`. */
 export default function QuotesInboxShortcutPage() {
-  redirect("/account/quotes?tab=pending");
+  redirect("/quotes?tab=pending");
 }
