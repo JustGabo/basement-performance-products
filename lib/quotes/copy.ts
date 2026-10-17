@@ -4,7 +4,8 @@ export const quoteCopy = {
   en: {
     internationalTitle: "International custom order",
     internationalBody:
-      "Need this part shipped outside our standard zones? Request a quote and we will confirm product price plus international shipping before you pay.",
+      "Outside the United States? Get a personalized shipping quote before placing your order.",
+    internationalFooter: "Personalized shipping • International orders • Direct assistance",
     requestCta: "Request a shipping quote",
     openChat: "Continue in your quote chat",
     submitRequest: "Send quote request",
@@ -44,7 +45,8 @@ export const quoteCopy = {
   es: {
     internationalTitle: "Pedido internacional personalizado",
     internationalBody:
-      "¿Necesitas envío fuera de nuestras zonas habituales? Solicita una cotización y confirmaremos el precio de la pieza más el envío internacional antes de cobrar.",
+      "¿Fuera de Estados Unidos? Obtén una cotización de envío personalizada antes de hacer tu pedido.",
+    internationalFooter: "Envío personalizado • Pedidos internacionales • Atención directa",
     requestCta: "Solicitar cotización de envío",
     openChat: "Continuar en tu chat de cotización",
     submitRequest: "Enviar solicitud",

@@ -1,5 +1,6 @@
 "use client";
 
+import { useRef, useState } from "react";
 import { sendQuoteOffer } from "@/app/manage/quotes/actions";
 import {
   Dialog,
@@ -33,6 +34,20 @@ export function AdminQuoteOfferDialog({
   const inputClass =
     "min-h-11 border border-foreground/15 bg-ink px-3 text-sm normal-case outline-none focus:border-brand";
   const labelClass = "flex flex-col gap-1 text-[10px] font-bold uppercase";
+  const inFlightRef = useRef(false);
+  const [pending, setPending] = useState(false);
+
+  const handleSubmit = async (formData: FormData) => {
+    if (inFlightRef.current) return;
+    inFlightRef.current = true;
+    setPending(true);
+    try {
+      await sendQuoteOffer(formData);
+    } finally {
+      inFlightRef.current = false;
+      setPending(false);
+    }
+  };
 
   return (
     <Dialog>
@@ -51,7 +66,7 @@ export function AdminQuoteOfferDialog({
             Catalog line {formatMoney(productTotalCents, currency, locale)} · customer receives chat update and email.
           </DialogDescription>
         </DialogHeader>
-        <form action={sendQuoteOffer} className="flex flex-col gap-3">
+        <form action={handleSubmit} className="flex flex-col gap-3">
           <input name="conversation_id" type="hidden" value={conversationId} />
           <input name="redirect_base" type="hidden" value={redirectBase} />
           <label className={labelClass}>
@@ -80,8 +95,12 @@ export function AdminQuoteOfferDialog({
             Note (optional)
             <textarea className={`${inputClass} min-h-20 py-2`} name="staff_note" />
           </label>
-          <button className="min-h-12 cursor-pointer bg-brand text-[10px] font-black text-black uppercase" type="submit">
-            Send quote + email
+          <button
+            className="min-h-12 cursor-pointer bg-brand text-[10px] font-black text-black uppercase disabled:cursor-not-allowed disabled:opacity-50"
+            type="submit"
+            disabled={pending}
+          >
+            {pending ? "Sending…" : "Send quote + email"}
           </button>
         </form>
       </DialogContent>

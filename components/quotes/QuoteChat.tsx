@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { Loader2 } from "lucide-react";
 import { QuoteChatComposer } from "@/components/quotes/QuoteChatComposer";
 import { QuoteMessageThread } from "@/components/quotes/QuoteMessageThread";
@@ -48,6 +48,8 @@ export function QuoteChat({
     phone: "",
     notes: "",
   });
+  const intakeInFlightRef = useRef(false);
+  const messageInFlightRef = useRef(false);
 
   const showIntakeForm = status === "collecting";
   const canSendMessages = status !== "collecting" && status !== "closed";
@@ -108,6 +110,8 @@ export function QuoteChat({
 
   const submitIntake = async (event: React.FormEvent) => {
     event.preventDefault();
+    if (intakeInFlightRef.current || submitting) return;
+    intakeInFlightRef.current = true;
     setSubmitting(true);
     setError(null);
     try {
@@ -134,6 +138,7 @@ export function QuoteChat({
     } catch (submitError) {
       setError(submitError instanceof Error ? submitError.message : "Could not submit details.");
     } finally {
+      intakeInFlightRef.current = false;
       setSubmitting(false);
     }
   };
@@ -141,9 +146,11 @@ export function QuoteChat({
   const submitMessage = async (event: React.FormEvent) => {
     event.preventDefault();
     const body = draftMessage.trim();
-    if (!body || !canSendMessages) return;
+    if (!body || !canSendMessages || messageInFlightRef.current || sendingMessage) return;
+    messageInFlightRef.current = true;
     setSendingMessage(true);
     setError(null);
+    setDraftMessage("");
     try {
       const response = await fetch(`/api/quotes/${conversationId}/messages`, {
         method: "POST",
@@ -156,21 +163,24 @@ export function QuoteChat({
       }
       if (data.messages) setMessages(data.messages);
       else await refresh();
-      setDraftMessage("");
     } catch (sendError) {
+      setDraftMessage(body);
       setError(sendError instanceof Error ? sendError.message : "Could not send message.");
     } finally {
+      messageInFlightRef.current = false;
       setSendingMessage(false);
     }
   };
 
   const composer = showIntakeForm ? (
     <form className="quote-chat-scroll grid max-h-[min(50vh,420px)] gap-3 overflow-y-auto" onSubmit={submitIntake}>
-      <QuoteIntakeFields
-        locale={locale}
-        intake={intake}
-        onChange={(patch) => setIntake((value) => ({ ...value, ...patch }))}
-      />
+      <fieldset className="contents" disabled={submitting}>
+        <QuoteIntakeFields
+          locale={locale}
+          intake={intake}
+          onChange={(patch) => setIntake((value) => ({ ...value, ...patch }))}
+        />
+      </fieldset>
       <button
         className="flex min-h-12 cursor-pointer items-center justify-center bg-brand text-[10px] font-black text-black uppercase disabled:opacity-50"
         type="submit"

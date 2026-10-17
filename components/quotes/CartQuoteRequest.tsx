@@ -1,12 +1,16 @@
 "use client";
 
-import { useState } from "react";
+import { useRef, useState } from "react";
 import Link from "next/link";
-import { ArrowRight, MessageSquare } from "lucide-react";
+import { MessageSquare } from "lucide-react";
 import type { CartItem } from "@/components/cart/CartProvider";
 import { quoteCopy, type QuoteLocale } from "@/lib/quotes/copy";
 import { QuoteIntakeFields, quoteFieldClass, quoteLabelClass } from "@/components/quotes/quote-form-fields";
 import { saveQuoteSession } from "@/lib/quotes/client-sessions";
+import {
+  InternationalQuotePromo,
+  internationalQuoteCtaClassName,
+} from "@/components/quotes/InternationalQuotePromo";
 import {
   Dialog,
   DialogContent,
@@ -32,12 +36,15 @@ export function CartQuoteRequest({ items, locale }: { items: CartItem[]; locale:
   });
   const [starting, setStarting] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const startInFlightRef = useRef(false);
 
   const selected = items.find((item) => item.product.id === productId) ?? items[0];
   if (!selected) return null;
 
   const startQuote = async (event: React.FormEvent) => {
     event.preventDefault();
+    if (startInFlightRef.current || starting) return;
+    startInFlightRef.current = true;
     setStarting(true);
     setError(null);
     try {
@@ -83,24 +90,20 @@ export function CartQuoteRequest({ items, locale }: { items: CartItem[]; locale:
     } catch (startError) {
       setError(startError instanceof Error ? startError.message : "Could not start quote chat.");
     } finally {
+      startInFlightRef.current = false;
       setStarting(false);
     }
   };
 
   return (
-    <Dialog open={open} onOpenChange={setOpen}>
-      <DialogTrigger asChild>
-        <button
-          className="flex min-h-11 w-full cursor-pointer items-center justify-between gap-3 border border-brand/40 px-4 text-[9px] font-black tracking-[.05em] text-brand uppercase transition hover:bg-brand/10"
-          type="button"
-        >
-          <span className="flex items-center gap-2">
+    <InternationalQuotePromo compact locale={locale}>
+      <Dialog open={open} onOpenChange={setOpen}>
+        <DialogTrigger asChild>
+          <button className={internationalQuoteCtaClassName(true)} type="button">
             <MessageSquare size={15} />
-            {locale === "es" ? "Cotizar envío internacional" : "Request international shipping"}
-          </span>
-          <ArrowRight size={15} />
-        </button>
-      </DialogTrigger>
+            {t.requestCta}
+          </button>
+        </DialogTrigger>
       <DialogContent className="max-h-[90svh] overflow-x-hidden overflow-y-auto border-foreground/15 bg-panel sm:max-w-lg">
         <DialogHeader>
           <DialogTitle className="font-display text-2xl font-bold uppercase">{t.internationalTitle}</DialogTitle>
@@ -152,7 +155,8 @@ export function CartQuoteRequest({ items, locale }: { items: CartItem[]; locale:
           </p>
         </form>
       </DialogContent>
-    </Dialog>
+      </Dialog>
+    </InternationalQuotePromo>
   );
 }
 

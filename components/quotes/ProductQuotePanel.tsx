@@ -1,7 +1,7 @@
 "use client";
 
-import { useState } from "react";
-import { ArrowRight, MessageSquare } from "lucide-react";
+import { useRef, useState } from "react";
+import { MessageSquare } from "lucide-react";
 import Link from "next/link";
 import type { StoreProduct } from "@/lib/commerce";
 import { quoteCopy, type QuoteLocale } from "@/lib/quotes/copy";
@@ -16,6 +16,10 @@ import {
   DialogTrigger,
 } from "@/components/ui/dialog";
 import { getMostRecentQuoteSession, saveQuoteSession } from "@/lib/quotes/client-sessions";
+import {
+  InternationalQuotePromo,
+  internationalQuoteCtaClassName,
+} from "@/components/quotes/InternationalQuotePromo";
 
 export function ProductQuotePanel({
   product,
@@ -41,9 +45,12 @@ export function ProductQuotePanel({
   const [error, setError] = useState<string | null>(null);
   const [conversationId, setConversationId] = useState<string | null>(null);
   const [accessToken, setAccessToken] = useState<string | null>(null);
+  const startInFlightRef = useRef(false);
 
   const startChat = async (event: React.FormEvent) => {
     event.preventDefault();
+    if (startInFlightRef.current || starting) return;
+    startInFlightRef.current = true;
     setStarting(true);
     setError(null);
     try {
@@ -90,6 +97,7 @@ export function ProductQuotePanel({
     } catch (startError) {
       setError(startError instanceof Error ? startError.message : "Could not start quote chat.");
     } finally {
+      startInFlightRef.current = false;
       setStarting(false);
     }
   };
@@ -105,17 +113,7 @@ export function ProductQuotePanel({
   };
 
   return (
-    <section className="flex flex-col gap-3 border border-foreground/15 bg-panel/50 p-5">
-      <div className="flex items-start gap-3">
-        <span className="grid size-10 shrink-0 place-items-center border border-brand/35 text-brand">
-          <MessageSquare size={18} />
-        </span>
-        <div className="flex min-w-0 flex-col gap-1">
-          <h2 className="text-[10px] font-black tracking-[.14em] text-brand uppercase">{t.internationalTitle}</h2>
-          <p className="text-xs leading-5 text-foreground/60">{t.internationalBody}</p>
-        </div>
-      </div>
-
+    <InternationalQuotePromo locale={locale}>
       <Dialog
         open={open}
         onOpenChange={(next) => {
@@ -124,12 +122,9 @@ export function ProductQuotePanel({
         }}
       >
         <DialogTrigger asChild>
-          <button
-            className="flex min-h-12 cursor-pointer items-center justify-between border border-brand px-4 text-[10px] font-black tracking-[.06em] text-brand uppercase transition hover:bg-brand hover:text-black"
-            type="button"
-          >
+          <button className={internationalQuoteCtaClassName()} type="button">
+            <MessageSquare size={16} />
             {t.requestCta}
-            <ArrowRight size={16} />
           </button>
         </DialogTrigger>
         <DialogContent
@@ -199,6 +194,6 @@ export function ProductQuotePanel({
           </div>
         </DialogContent>
       </Dialog>
-    </section>
+    </InternationalQuotePromo>
   );
 }
