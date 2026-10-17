@@ -32,7 +32,15 @@ const copy = {
 const fieldClass = "h-[50px] w-full rounded-sm border border-foreground/20 bg-ink px-4 text-base text-foreground outline-none transition focus:border-brand focus:ring-3 focus:ring-brand/10 [@media(max-height:820px)]:h-[41px]";
 const labelClass = "grid gap-2 text-[11px] font-bold tracking-[.06em] text-foreground/80 uppercase [@media(max-height:820px)]:gap-1";
 
-export default function AuthPage({ mode }: { mode: AuthMode }) {
+export default function AuthPage({
+  mode,
+  defaultNext = "/account",
+  staff = false,
+}: {
+  mode: AuthMode;
+  defaultNext?: string;
+  staff?: boolean;
+}) {
   const router = useRouter();
   const [locale, setLocale] = useState<Locale>("en");
   const [passwordVisible, setPasswordVisible] = useState(false);
@@ -49,6 +57,8 @@ export default function AuthPage({ mode }: { mode: AuthMode }) {
         setLocale(stored);
         document.documentElement.setAttribute("lang", stored);
       }
+      const queryError = new URLSearchParams(window.location.search).get("error");
+      if (queryError) setError(queryError);
     }, 0);
     return () => window.clearTimeout(timer);
   }, []);
@@ -73,7 +83,9 @@ export default function AuthPage({ mode }: { mode: AuthMode }) {
       if (mode === "sign-in") {
         await auth.signIn(email, password);
         const requestedPath = new URLSearchParams(window.location.search).get("next");
-        router.push(requestedPath?.startsWith("/") && !requestedPath.startsWith("//") ? requestedPath : "/account");
+        const next =
+          requestedPath?.startsWith("/") && !requestedPath.startsWith("//") ? requestedPath : defaultNext;
+        router.push(next);
         router.refresh();
         return;
       }
@@ -119,10 +131,12 @@ export default function AuthPage({ mode }: { mode: AuthMode }) {
       <div className="flex w-full flex-col gap-5 rounded-sm border border-foreground/12 bg-panel/95 p-[clamp(30px,3.2vw,38px)] shadow-[0_30px_90px_rgba(0,0,0,.18)] [@media(max-height:820px)]:gap-3 [@media(max-height:820px)]:px-7 [@media(max-height:820px)]:py-5 max-[600px]:px-5 max-[600px]:py-6">
         <div className="flex flex-col gap-3 [@media(max-height:820px)]:gap-2">
           <div className="flex flex-col gap-2 [@media(max-height:820px)]:gap-1">
-            <p className="text-[10px] font-extrabold tracking-[.19em] text-brand uppercase">{content.eyebrow}</p>
-            <h1 id="auth-title" className="font-display text-[clamp(40px,5vw,50px)] leading-[.98] font-bold tracking-[-.035em] uppercase [@media(max-height:820px)]:text-[40px]">{content.title}</h1>
+            <p className="text-[10px] font-extrabold tracking-[.19em] text-brand uppercase">{staff ? "Staff tools" : content.eyebrow}</p>
+            <h1 id="auth-title" className="font-display text-[clamp(40px,5vw,50px)] leading-[.98] font-bold tracking-[-.035em] uppercase [@media(max-height:820px)]:text-[40px]">{staff ? "Manage quotes" : content.title}</h1>
           </div>
-          <p className="max-w-[390px] text-[13px] leading-6 text-foreground/60 [@media(max-height:820px)]:text-xs">{content.intro}</p>
+          <p className="max-w-[390px] text-[13px] leading-6 text-foreground/60 [@media(max-height:820px)]:text-xs">
+            {staff ? "Sign in with your Supabase admin account to review international shipping requests." : content.intro}
+          </p>
         </div>
 
         <form className="grid gap-4 [@media(max-height:820px)]:gap-2.5" onSubmit={handleSubmit}>
@@ -147,7 +161,7 @@ export default function AuthPage({ mode }: { mode: AuthMode }) {
         </form>
 
         <div className="flex flex-col gap-3.5 border-t border-foreground/12 pt-4.5 [@media(max-height:820px)]:gap-2 [@media(max-height:820px)]:pt-3">
-          <p className="text-center text-xs text-foreground/60">{content.switchLead} <Link className="text-brand underline underline-offset-3" href={switchHref}>{content.switchAction}</Link></p>
+          {!staff && <p className="text-center text-xs text-foreground/60">{content.switchLead} <Link className="text-brand underline underline-offset-3" href={switchHref}>{content.switchAction}</Link></p>}
           <p className="text-center text-[9px] leading-4 text-foreground/40">{t.legal} <Link className="text-brand underline underline-offset-3" href="/terms">{t.terms}</Link> {t.and} <Link className="text-brand underline underline-offset-3" href="/privacy">{t.privacy}</Link>.</p>
         </div>
       </div>

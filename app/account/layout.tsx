@@ -1,6 +1,6 @@
 import type { Metadata } from "next";
 import Link from "next/link";
-import { ArrowLeft, LayoutDashboard, LogOut, MapPin, Package, ShieldCheck, UserRound } from "lucide-react";
+import { ArrowLeft, LayoutDashboard, LogOut, MapPin, MessageSquare, Package, ShieldCheck, UserRound } from "lucide-react";
 import { redirect } from "next/navigation";
 import type { ReactNode } from "react";
 import { CartDrawer } from "@/components/cart/CartDrawer";
@@ -20,6 +20,7 @@ export const dynamic = "force-dynamic";
 const navigation = [
   { href: "/account", label: "Overview", icon: LayoutDashboard },
   { href: "/account/orders", label: "Orders", icon: Package },
+  { href: "/account/quotes", label: "Shipping quotes", icon: MessageSquare },
   { href: "/account/addresses", label: "Addresses", icon: MapPin },
   { href: "/account/profile", label: "Profile & security", icon: ShieldCheck },
 ];

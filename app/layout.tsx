@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import Script from "next/script";
 import { Geist, Oswald } from "next/font/google";
 import type { ReactNode } from "react";
 import { CartProvider } from "@/components/cart/CartProvider";
@@ -36,8 +37,21 @@ export const metadata: Metadata = {
 
 export default async function RootLayout({ children }: { children: ReactNode }) {
   const marketCountry = await getMarketCountry();
-  return <html lang="en" className={`${geist.variable} ${oswald.variable} dark`} suppressHydrationWarning>
-    <head><script dangerouslySetInnerHTML={{ __html: "try{var t=localStorage.getItem('basement-theme')||'dark';document.documentElement.classList.toggle('dark',t==='dark');document.documentElement.style.colorScheme=t}catch(e){}" }} /></head>
-    <body><ThemeProvider><TooltipProvider><MarketProvider initialCountry={marketCountry}><CartProvider>{children}</CartProvider></MarketProvider><Toaster position="bottom-right" closeButton /></TooltipProvider></ThemeProvider></body>
-  </html>;
+  return (
+    <html lang="en" className={`${geist.variable} ${oswald.variable} dark`} suppressHydrationWarning>
+      <body>
+        <Script id="basement-theme-init" strategy="beforeInteractive">
+          {`try{var t=localStorage.getItem('basement-theme')||'dark';document.documentElement.classList.toggle('dark',t==='dark');document.documentElement.style.colorScheme=t}catch(e){}`}
+        </Script>
+        <ThemeProvider>
+          <TooltipProvider>
+            <MarketProvider initialCountry={marketCountry}>
+              <CartProvider>{children}</CartProvider>
+            </MarketProvider>
+            <Toaster position="bottom-right" closeButton />
+          </TooltipProvider>
+        </ThemeProvider>
+      </body>
+    </html>
+  );
 }

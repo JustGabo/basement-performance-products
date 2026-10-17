@@ -52,3 +52,30 @@
     font-size: 16px !important;
   }
 }
+
+.quote-chat-scroll,
+.quote-sidebar-scroll {
+  scrollbar-width: thin;
+  scrollbar-color: rgb(255 255 255 / 0.14) transparent;
+}
+
+.quote-chat-scroll::-webkit-scrollbar,
+.quote-sidebar-scroll::-webkit-scrollbar {
+  width: 6px;
+}
+
+.quote-chat-scroll::-webkit-scrollbar-track,
+.quote-sidebar-scroll::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.quote-chat-scroll::-webkit-scrollbar-thumb,
+.quote-sidebar-scroll::-webkit-scrollbar-thumb {
+  background: rgb(255 255 255 / 0.12);
+  border-radius: 999px;
+}
+
+.quote-chat-scroll::-webkit-scrollbar-thumb:hover,
+.quote-sidebar-scroll::-webkit-scrollbar-thumb:hover {
+  background: rgb(255 255 255 / 0.22);
+}
