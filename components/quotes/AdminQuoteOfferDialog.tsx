@@ -19,6 +19,7 @@ export function AdminQuoteOfferDialog({
   defaultShippingDollars,
   defaultInvoiceUrl,
   adminApiConfigured,
+  redirectBase = "/manage/quotes",
 }: {
   conversationId: string;
   locale: QuoteLocale;
@@ -27,6 +28,7 @@ export function AdminQuoteOfferDialog({
   defaultShippingDollars: string;
   defaultInvoiceUrl: string;
   adminApiConfigured: boolean;
+  redirectBase?: string;
 }) {
   const inputClass =
     "min-h-11 border border-foreground/15 bg-ink px-3 text-sm normal-case outline-none focus:border-brand";
@@ -51,6 +53,7 @@ export function AdminQuoteOfferDialog({
         </DialogHeader>
         <form action={sendQuoteOffer} className="flex flex-col gap-3">
           <input name="conversation_id" type="hidden" value={conversationId} />
+          <input name="redirect_base" type="hidden" value={redirectBase} />
           <label className={labelClass}>
             International shipping (USD)
             <input

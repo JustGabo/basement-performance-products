@@ -39,7 +39,7 @@ export function QuoteSessionsSidebar({
   return (
     <aside
       className={cn(
-        "flex min-h-0 w-full shrink-0 flex-col border-foreground/10 bg-panel/40 lg:h-full lg:w-[360px] lg:border-r",
+        "flex h-full min-h-0 w-full shrink-0 flex-col self-stretch border-foreground/10 bg-panel/40 lg:w-[360px] lg:border-r",
         className,
       )}
     >

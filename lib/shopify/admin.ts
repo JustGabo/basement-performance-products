@@ -1,5 +1,7 @@
 import "server-only";
 
+import { resolveCountryCodeForShopify } from "@/lib/quotes/country-code";
+
 type DraftOrderResult = {
   draftOrderId: string;
   invoiceUrl: string;
@@ -113,6 +115,12 @@ export async function createInternationalDraftOrder(input: {
 
   const [firstName, ...rest] = input.shippingAddress.firstName.split(" ");
   const lastName = input.shippingAddress.lastName || rest.join(" ") || firstName;
+  const countryCode = resolveCountryCodeForShopify(input.shippingAddress.country);
+  if (!countryCode) {
+    throw new Error(
+      "Could not map country for Shopify checkout. Ask the customer for a 2-letter code (MX, DO) or add the country name to our map.",
+    );
+  }
 
   const response = await fetch(
     `https://${config.domain}/admin/api/${config.version}/graphql.json`,
@@ -160,7 +168,7 @@ export async function createInternationalDraftOrder(input: {
             shippingAddress: {
               firstName: firstName || input.shippingAddress.firstName,
               lastName,
-              countryCode: input.shippingAddress.country,
+              countryCode,
               city: input.shippingAddress.city,
               province: input.shippingAddress.province || "",
               zip: input.shippingAddress.zip,

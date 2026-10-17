@@ -8,6 +8,7 @@ import { toast } from "sonner";
 import { useCart } from "@/components/cart/CartProvider";
 import { BrandLogo } from "@/components/site/BrandLogo";
 import { ThemeToggle } from "@/components/theme/ThemeToggle";
+import { CartQuoteRequest } from "@/components/quotes/CartQuoteRequest";
 import { formatCartPrice, formatProductPrice } from "@/lib/commerce";
 import { writePendingCheckout } from "@/lib/commerce/browser-cart";
 
@@ -37,6 +38,8 @@ const copy = {
     processing: "Securing your order...",
     secure: "Secure Shopify checkout", inventory: "Inventory checked before payment", account: "Order saved to your account",
     shopify: "Shopify secure checkout", shopifyCopy: "Shipping, taxes and the final USD charge are confirmed securely in Shopify.", shopifyAction: "Continue to secure checkout",
+    intlHint: "Ordering from outside the United States?",
+    intlBody: "Request an international shipping quote before checkout. Our team will confirm product + freight and send a secure payment link.",
   },
   es: {
     back: "Volver al carrito", kicker: "Pago seguro", title: "Termina tu proyecto.", contact: "Contacto",
@@ -48,6 +51,8 @@ const copy = {
     processing: "Procesando tu pedido...",
     secure: "Pago protegido por Shopify", inventory: "Disponibilidad verificada antes del pago", account: "Pedido guardado en tu cuenta",
     shopify: "Pago seguro con Shopify", shopifyCopy: "El envío, los impuestos y el cargo final en USD se confirman de forma segura en Shopify.", shopifyAction: "Continuar al pago seguro",
+    intlHint: "¿Tu pedido es fuera de Estados Unidos?",
+    intlBody: "Solicita una cotización de envío internacional antes de pagar. Confirmamos pieza + flete y te enviamos un link seguro de pago.",
   },
 } as const;
 
@@ -159,6 +164,11 @@ export function CheckoutClient({ prefill }: { prefill: CheckoutPrefill }) {
           <div className="flex items-center justify-between gap-5"><h2 className="font-display text-3xl font-bold uppercase">{t.summary}</h2><span className="text-[10px] font-black text-brand">{String(items.reduce((total, item) => total + item.quantity, 0)).padStart(2, "0")}</span></div>
           <div className="flex max-h-85 flex-col gap-4 overflow-y-auto pr-1">{items.map(({ product, quantity }) => <article className="grid grid-cols-[72px_minmax(0,1fr)_auto] items-center gap-3" key={product.id}><div className="relative h-18 overflow-hidden bg-ink"><Image className="object-cover" src={product.image} alt={product.name} fill sizes="72px" style={{ objectPosition: product.objectPosition }} /><span className="absolute top-1 right-1 grid size-5 place-items-center rounded-full bg-brand text-[8px] font-black text-black">{quantity}</span></div><div className="min-w-0"><h3 className="font-display truncate text-base font-bold uppercase">{product.name}</h3><p className="truncate text-[8px] text-foreground/45 uppercase">{product.part}</p></div><strong className="text-xs">{formatProductPrice(product, quantity)}</strong></article>)}</div>
           <div className="flex flex-col gap-3 border-t border-foreground/12 pt-5 text-xs"><div className="flex justify-between gap-5 text-foreground/60"><span>{t.subtotal}</span><strong className="text-foreground">{formatCartPrice(items)}</strong></div>          <div className="flex justify-between gap-5 text-foreground/60"><span>{t.shipping}</span><span className="max-w-50 text-right text-[10px] text-brand">{t.calculated}</span></div></div>
+          <div className="flex flex-col gap-3 border-t border-foreground/12 pt-4">
+            <p className="text-[10px] font-black tracking-[.08em] text-brand uppercase">{t.intlHint}</p>
+            <p className="text-xs leading-5 text-foreground/55">{t.intlBody}</p>
+            <CartQuoteRequest items={items} locale={locale} />
+          </div>
           <div className="flex items-center gap-3 border-t border-foreground/12 pt-4 text-[9px] text-foreground/45"><Truck className="text-brand" size={17} />Market price · confirmed at Shopify checkout</div>
         </aside>
       </div>}

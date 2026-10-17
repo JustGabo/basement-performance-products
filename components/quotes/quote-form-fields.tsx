@@ -32,9 +32,8 @@ export function QuoteIntakeFields({
           <input
             className={quoteFieldClass}
             value={intake.country}
-            onChange={(event) => onChange({ country: event.target.value.toUpperCase() })}
-            placeholder="MX"
-            maxLength={2}
+            onChange={(event) => onChange({ country: event.target.value })}
+            placeholder={locale === "es" ? "México o MX" : "Mexico or MX"}
             required
           />
         </label>

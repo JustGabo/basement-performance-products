@@ -1,4 +1,4 @@
-import { requireAdmin } from "@/lib/admin/auth";
+import { assertQuoteStaffWriter } from "@/lib/quotes/staff-access";
 import { listMessages } from "@/lib/quotes/server";
 import { hasShopifyAdminConfig } from "@/lib/shopify/admin";
 import { AdminQuoteInbox } from "@/components/quotes/AdminQuoteInbox";
@@ -14,7 +14,7 @@ export default async function ManageQuoteDetailPage({
 }) {
   const { id } = await params;
   const query = await searchParams;
-  const { admin } = await requireAdmin();
+  const admin = await assertQuoteStaffWriter();
 
   const { data: quotesData } = await admin
     .from("quote_conversations")

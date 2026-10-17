@@ -1,11 +1,12 @@
 "use client";
 
 import Link from "next/link";
-import { ArrowLeft } from "lucide-react";
+import { ArrowLeft, Maximize2 } from "lucide-react";
 import { AdminFeedback } from "@/components/admin/AdminFeedback";
 import { AdminQuoteChatPanel } from "@/components/quotes/AdminQuoteChatPanel";
 import { AdminQuoteListSidebar, type AdminQuoteListItem } from "@/components/quotes/AdminQuoteListSidebar";
 import { AdminQuoteOfferDialog } from "@/components/quotes/AdminQuoteOfferDialog";
+import { QUOTE_EMBEDDED_SHELL_CLASS } from "@/lib/quotes/shell-layout";
 import type { QuoteLocale } from "@/lib/quotes/copy";
 import type { QuoteMessage } from "@/lib/quotes/message-types";
 
@@ -31,23 +32,42 @@ export function AdminQuoteInbox({
   messages,
   feedback,
   hasShopifyAdmin,
+  embedded = false,
+  listBasePath = "/manage/quotes",
+  backHref,
+  fullscreenHref,
+  showShopLink = true,
 }: {
   quotes: AdminQuoteListItem[];
   activeConversation: ActiveConversation | null;
   messages: QuoteMessage[];
   feedback?: { error?: string; saved?: string };
   hasShopifyAdmin: boolean;
+  embedded?: boolean;
+  listBasePath?: string;
+  backHref?: string;
+  fullscreenHref?: string | null;
+  showShopLink?: boolean;
 }) {
   const activeId = activeConversation?.id ?? null;
   const locale: QuoteLocale = activeConversation?.locale === "es" ? "es" : "en";
   const productTotal = (activeConversation?.unit_price_cents ?? 0) * (activeConversation?.quantity ?? 1);
   const listOnly = !activeConversation;
+  const listBackHref = backHref ?? listBasePath;
+  const shellClass = embedded ? QUOTE_EMBEDDED_SHELL_CLASS : "flex h-dvh flex-col overflow-hidden bg-ink text-foreground";
+  const rowClass = "flex min-h-0 flex-1 flex-col lg:flex-row lg:items-stretch";
 
   if (listOnly) {
     return (
-      <main className="flex h-dvh flex-col overflow-hidden bg-ink text-foreground">
-        <div className="flex min-h-0 flex-1 flex-col lg:flex-row">
-          <AdminQuoteListSidebar quotes={quotes} activeId={null} showShopLink className="h-full max-h-none lg:flex" />
+      <div className={shellClass}>
+        <div className={rowClass}>
+          <AdminQuoteListSidebar
+            quotes={quotes}
+            activeId={null}
+            showShopLink={showShopLink}
+            basePath={listBasePath}
+            className="h-full max-h-none w-full lg:flex"
+          />
           <section className="hidden min-h-0 flex-1 flex-col items-center justify-center gap-2 px-6 text-center lg:flex">
             <p className="text-[10px] font-black tracking-[.14em] text-brand uppercase">International quotes</p>
             <h1 className="font-display text-3xl font-bold uppercase">Select a conversation</h1>
@@ -56,7 +76,7 @@ export function AdminQuoteInbox({
             </p>
           </section>
         </div>
-      </main>
+      </div>
     );
   }
 
@@ -65,17 +85,23 @@ export function AdminQuoteInbox({
     : "";
 
   return (
-    <main className="flex h-dvh flex-col overflow-hidden bg-ink text-foreground">
-      <div className="flex min-h-0 flex-1 flex-col lg:flex-row">
-        <div className="hidden min-h-0 lg:flex lg:h-full">
-          <AdminQuoteListSidebar quotes={quotes} activeId={activeId} showShopLink />
+    <div className={shellClass}>
+      <div className={rowClass}>
+        <div className="hidden min-h-0 self-stretch lg:flex lg:h-full lg:w-[360px]">
+          <AdminQuoteListSidebar
+            quotes={quotes}
+            activeId={activeId}
+            showShopLink={showShopLink}
+            basePath={listBasePath}
+            className="h-full w-full"
+          />
         </div>
 
         <section className="flex min-h-0 min-w-0 flex-1 flex-col bg-ink">
           <header className="flex shrink-0 items-center gap-2 border-b border-foreground/10 bg-panel/50 px-3 py-3 lg:gap-3 lg:px-4">
             <Link
               className="grid size-9 shrink-0 place-items-center text-foreground/70 hover:text-brand lg:hidden"
-              href="/manage/quotes"
+              href={listBackHref}
               aria-label="Back to quotes"
             >
               <ArrowLeft size={20} />
@@ -89,6 +115,18 @@ export function AdminQuoteInbox({
                 {activeConversation.country ? ` · ${activeConversation.country}` : ""}
               </p>
             </div>
+            {fullscreenHref ? (
+              <Link
+                className="grid size-9 shrink-0 place-items-center rounded-md border border-foreground/15 text-foreground/70 transition hover:border-brand hover:text-brand"
+                href={fullscreenHref}
+                target="_blank"
+                rel="noreferrer"
+                aria-label="Open full screen chat"
+                title="Full screen"
+              >
+                <Maximize2 size={17} />
+              </Link>
+            ) : null}
             <AdminQuoteOfferDialog
               conversationId={activeConversation.id}
               locale={locale}
@@ -97,6 +135,7 @@ export function AdminQuoteInbox({
               defaultShippingDollars={defaultShipping}
               defaultInvoiceUrl={activeConversation.invoice_url ?? ""}
               adminApiConfigured={hasShopifyAdmin}
+              redirectBase={listBasePath}
             />
           </header>
 
@@ -111,9 +150,10 @@ export function AdminQuoteInbox({
             locale={locale}
             messages={messages}
             layout="full"
+            redirectBase={listBasePath}
           />
         </section>
       </div>
-    </main>
+    </div>
   );
 }

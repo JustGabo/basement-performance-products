@@ -7,6 +7,7 @@ import { useEffect, useState } from "react";
 import { useCart } from "@/components/cart/CartProvider";
 import { BrandLogo } from "@/components/site/BrandLogo";
 import { ThemeToggle } from "@/components/theme/ThemeToggle";
+import { CartQuoteRequest } from "@/components/quotes/CartQuoteRequest";
 import { formatCartPrice, formatProductPrice } from "@/lib/commerce";
 
 type Locale = "en" | "es";
@@ -81,6 +82,7 @@ export default function CartPage() {
         <aside className="sticky top-24 flex flex-col gap-6 rounded-sm border border-foreground/15 bg-panel p-6 max-[900px]:static">
           <div className="flex flex-col gap-4 text-xs"><div className="flex justify-between gap-5 text-foreground/65"><span>{t.subtotal}</span><strong className="text-foreground">{formatCartPrice(items)}</strong></div><div className="flex justify-between gap-5 text-foreground/65"><span>{t.shipping}</span><span className="text-right text-[10px] uppercase">{t.calculated}</span></div></div>
           <div className="flex items-end justify-between gap-5 border-t border-foreground/15 pt-5"><span className="font-display text-2xl font-bold uppercase">{t.total}</span><strong className="text-xl text-brand">{formatCartPrice(items)}</strong></div>
+          <CartQuoteRequest items={items} locale={locale} />
           <Link className="flex min-h-13 items-center justify-between bg-brand px-5 text-[10px] font-black tracking-[.06em] text-black uppercase transition hover:bg-[#d99f00]" href="/checkout">{t.checkout}<ArrowRight size={18} /></Link>
           <p className="flex gap-2 text-[10px] leading-4 text-foreground/45"><ShieldCheck className="shrink-0 text-brand" size={17} />{t.secure}</p>
         </aside>

@@ -73,7 +73,7 @@ export async function POST(request: Request) {
 
     const conversation = hasIntake
       ? await createConversationWithIntake(conversationInput, {
-          country: country.toUpperCase(),
+          country,
           city,
           region: body.region,
           postalCode,

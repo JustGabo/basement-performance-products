@@ -28,17 +28,19 @@ export function AdminQuoteListSidebar({
   quotes,
   activeId,
   showShopLink = false,
+  basePath = "/manage/quotes",
   className,
 }: {
   quotes: AdminQuoteListItem[];
   activeId: string | null;
   showShopLink?: boolean;
+  basePath?: string;
   className?: string;
 }) {
   return (
     <aside
       className={cn(
-        "flex min-h-0 w-full shrink-0 flex-col border-foreground/10 bg-panel/40 lg:h-full lg:w-[360px] lg:border-r",
+        "flex h-full min-h-0 w-full shrink-0 flex-col self-stretch border-foreground/10 bg-panel/40 lg:w-[360px] lg:border-r",
         className,
       )}
     >
@@ -69,7 +71,7 @@ export function AdminQuoteListSidebar({
                     ? "border-l-[3px] border-l-brand bg-brand/10"
                     : "border-l-[3px] border-l-transparent hover:bg-panel/60"
                 }`}
-                href={`/manage/quotes/${quote.id}`}
+                href={`${basePath}/${quote.id}`}
               >
                 <span className="line-clamp-2 text-[11px] font-bold leading-4 uppercase">{quote.product_name}</span>
                 <span className="truncate text-[10px] text-foreground/45">{quote.customer_name}</span>

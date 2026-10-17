@@ -2,7 +2,8 @@
 
 import { useCallback, useEffect, useState } from "react";
 import Link from "next/link";
-import { ArrowLeft } from "lucide-react";
+import { ArrowLeft, Maximize2 } from "lucide-react";
+import { QUOTE_EMBEDDED_SHELL_CLASS } from "@/lib/quotes/shell-layout";
 import { QuoteChat } from "@/components/quotes/QuoteChat";
 import { QuoteSessionsSidebar } from "@/components/quotes/QuoteSessionsSidebar";
 import {
@@ -87,15 +88,18 @@ export function QuoteConversationShell({
   const listHref =
     locale === "es" ? `${basePath}?lang=es` : basePath;
 
+  const fullscreenHref = `${basePath === "/account/quotes" ? "/quotes" : basePath}/${conversationId}?token=${encodeURIComponent(accessToken)}${locale === "es" ? "&lang=es" : ""}`;
+
   const content = (
-    <div className="flex min-h-0 flex-1 flex-col lg:flex-row">
-        <div className="hidden min-h-0 lg:flex lg:h-full">
+    <div className="flex min-h-0 flex-1 flex-col lg:flex-row lg:items-stretch">
+        <div className="hidden min-h-0 self-stretch lg:flex lg:h-full lg:w-[360px]">
           <QuoteSessionsSidebar
             sessions={sessions}
             activeId={conversationId}
             locale={locale}
             showShopLink={!embedded}
             basePath={basePath}
+            className="h-full w-full"
           />
         </div>
 
@@ -112,6 +116,18 @@ export function QuoteConversationShell({
               <h1 className="truncate text-[15px] font-semibold leading-snug text-foreground">{contactTitle}</h1>
               <p className="truncate text-xs text-foreground/45">{statusSubtitle(meta?.status, locale)}</p>
             </div>
+            {embedded ? (
+              <Link
+                className="grid size-9 shrink-0 place-items-center rounded-md border border-foreground/15 text-foreground/70 transition hover:border-brand hover:text-brand"
+                href={fullscreenHref}
+                target="_blank"
+                rel="noreferrer"
+                aria-label={locale === "es" ? "Pantalla completa" : "Full screen"}
+                title={locale === "es" ? "Pantalla completa" : "Full screen"}
+              >
+                <Maximize2 size={17} />
+              </Link>
+            ) : null}
           </header>
 
           <QuoteChat
@@ -126,11 +142,7 @@ export function QuoteConversationShell({
   );
 
   if (embedded) {
-    return (
-      <div className="flex min-h-[min(720px,calc(100dvh-240px))] flex-col overflow-hidden border border-foreground/15 bg-ink">
-        {content}
-      </div>
-    );
+    return <div className={QUOTE_EMBEDDED_SHELL_CLASS}>{content}</div>;
   }
 
   return <main className="flex h-dvh flex-col overflow-hidden bg-ink text-foreground">{content}</main>;

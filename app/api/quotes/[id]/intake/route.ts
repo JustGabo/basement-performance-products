@@ -49,7 +49,7 @@ export async function POST(
     }
 
     await submitIntake(conversation, {
-      country: country.toUpperCase(),
+      country,
       city,
       region: body.region,
       postalCode,

@@ -2,7 +2,7 @@
 
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
-import { requireAdmin } from "@/lib/admin/auth";
+import { assertQuoteStaffWriter, quoteStaffRedirectBase } from "@/lib/quotes/staff-access";
 import { sendQuoteReadyEmail } from "@/lib/email/resend";
 import { buildQuoteReadyEmail } from "@/lib/quotes/offer-email";
 import type { QuoteLocale } from "@/lib/quotes/copy";
@@ -18,14 +18,15 @@ function destination(path: string, type: "saved" | "error", message: string) {
 }
 
 export async function sendQuoteOffer(formData: FormData) {
-  const { admin } = await requireAdmin();
+  const admin = await assertQuoteStaffWriter();
+  const redirectBase = quoteStaffRedirectBase(formData);
   const conversationId = String(formData.get("conversation_id") ?? "");
   const shippingDollars = Number(formData.get("shipping_dollars") ?? 0);
   const manualInvoiceUrl = String(formData.get("manual_invoice_url") ?? "").trim();
   const staffNote = String(formData.get("staff_note") ?? "").trim();
 
   if (!conversationId || !Number.isFinite(shippingDollars) || shippingDollars < 0) {
-    redirect(destination(`/manage/quotes/${conversationId || ""}`, "error", "Invalid shipping amount."));
+    redirect(destination(`${redirectBase}/${conversationId || ""}`, "error", "Invalid shipping amount."));
   }
 
   const shippingCents = Math.round(shippingDollars * 100);
@@ -37,11 +38,11 @@ export async function sendQuoteOffer(formData: FormData) {
     .maybeSingle();
 
   if (error || !conversation) {
-    redirect(destination(`/manage/quotes/${conversationId}`, "error", error?.message ?? "Conversation not found."));
+    redirect(destination(`${redirectBase}/${conversationId}`, "error", error?.message ?? "Conversation not found."));
   }
 
   if (!conversation.country || !conversation.city || !conversation.postal_code) {
-    redirect(destination(`/manage/quotes/${conversationId}`, "error", "Customer shipping details are incomplete."));
+    redirect(destination(`${redirectBase}/${conversationId}`, "error", "Customer shipping details are incomplete."));
   }
 
   let invoiceUrl = manualInvoiceUrl;
@@ -51,7 +52,7 @@ export async function sendQuoteOffer(formData: FormData) {
     if (!hasShopifyAdminConfig()) {
       redirect(
         destination(
-          `/manage/quotes/${conversationId}`,
+          `${redirectBase}/${conversationId}`,
           "error",
           "Add a manual Shopify invoice URL or configure Shopify Admin API credentials (token or client ID + secret).",
         ),
@@ -60,7 +61,7 @@ export async function sendQuoteOffer(formData: FormData) {
     if (!conversation.merchandise_id) {
       redirect(
         destination(
-          `/manage/quotes/${conversationId}`,
+          `${redirectBase}/${conversationId}`,
           "error",
           "This product has no Shopify variant id for draft orders.",
         ),
@@ -92,7 +93,7 @@ export async function sendQuoteOffer(formData: FormData) {
     } catch (draftError) {
       redirect(
         destination(
-          `/manage/quotes/${conversationId}`,
+          `${redirectBase}/${conversationId}`,
           "error",
           draftError instanceof Error ? draftError.message : "Shopify draft order failed.",
         ),
@@ -144,7 +145,7 @@ export async function sendQuoteOffer(formData: FormData) {
     .eq("id", conversationId);
 
   if (updateError) {
-    redirect(destination(`/manage/quotes/${conversationId}`, "error", updateError.message));
+    redirect(destination(`${redirectBase}/${conversationId}`, "error", updateError.message));
   }
 
   const chatUrl = `${siteUrl()}/quotes/${conversationId}?token=${conversation.access_token}`;
@@ -181,19 +182,22 @@ export async function sendQuoteOffer(formData: FormData) {
   }
 
   revalidatePath("/manage/quotes");
+  revalidatePath("/account/quotes");
+  revalidatePath(`${redirectBase}/${conversationId}`);
   revalidatePath(`/manage/quotes/${conversationId}`);
   revalidatePath(`/quotes/${conversationId}`);
-  redirect(destination(`/manage/quotes/${conversationId}`, "saved", emailNotice));
+  redirect(destination(`${redirectBase}/${conversationId}`, "saved", emailNotice));
 }
 
 export async function sendStaffReply(formData: FormData) {
+  const redirectBase = quoteStaffRedirectBase(formData);
   const conversationId = String(formData.get("conversation_id") ?? "");
   const body = String(formData.get("body") ?? "").trim();
   if (!conversationId || !body) {
-    redirect(destination(`/manage/quotes/${conversationId || ""}`, "error", "Message is required."));
+    redirect(destination(`${redirectBase}/${conversationId || ""}`, "error", "Message is required."));
   }
 
-  await requireAdmin();
+  await assertQuoteStaffWriter();
   await insertMessage({
     conversationId,
     role: "staff",
@@ -201,7 +205,10 @@ export async function sendStaffReply(formData: FormData) {
     body,
   });
 
+  revalidatePath("/manage/quotes");
+  revalidatePath("/account/quotes");
+  revalidatePath(`${redirectBase}/${conversationId}`);
   revalidatePath(`/manage/quotes/${conversationId}`);
   revalidatePath(`/quotes/${conversationId}`);
-  redirect(destination(`/manage/quotes/${conversationId}`, "saved", "Reply sent."));
+  redirect(destination(`${redirectBase}/${conversationId}`, "saved", "Reply sent."));
 }

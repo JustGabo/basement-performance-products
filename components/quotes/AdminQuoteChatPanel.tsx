@@ -13,11 +13,13 @@ export function AdminQuoteChatPanel({
   locale,
   messages,
   layout = "full",
+  redirectBase = "/manage/quotes",
 }: {
   conversationId: string;
   locale: QuoteLocale;
   messages: QuoteMessage[];
   layout?: "full" | "compact";
+  redirectBase?: string;
 }) {
   const router = useRouter();
   useQuoteRealtime(conversationId, () => {
@@ -31,7 +33,7 @@ export function AdminQuoteChatPanel({
     <QuoteChatComposer
       mode="server"
       formAction={sendStaffReply}
-      hiddenFields={{ conversation_id: conversationId }}
+      hiddenFields={{ conversation_id: conversationId, redirect_base: redirectBase }}
       placeholder={placeholder}
       sendLabel={sendLabel}
     />

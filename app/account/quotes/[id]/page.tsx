@@ -1,6 +1,14 @@
 import Link from "next/link";
+import { AdminQuoteInbox } from "@/components/quotes/AdminQuoteInbox";
 import { QuoteConversationShell } from "@/components/quotes/QuoteConversationShell";
+import type { AdminQuoteListItem } from "@/components/quotes/AdminQuoteListSidebar";
+import { createAdminClient } from "@/lib/supabase/admin";
+import { listMessages } from "@/lib/quotes/server";
+import { isQuoteStaffEmail } from "@/lib/quotes/staff-access";
+import { hasShopifyAdminConfig } from "@/lib/shopify/admin";
+import { getShopifyCustomer } from "@/lib/shopify/customer-data";
 import type { QuoteLocale } from "@/lib/quotes/copy";
+import type { QuoteMessage } from "@/lib/quotes/message-types";
 
 export default async function AccountQuoteConversationPage({
   params,
@@ -14,6 +22,58 @@ export default async function AccountQuoteConversationPage({
   const token = typeof query.token === "string" ? query.token : "";
   const locale: QuoteLocale = query.lang === "es" ? "es" : "en";
   const listHref = locale === "es" ? "/account/quotes?lang=es" : "/account/quotes";
+
+  const customer = await getShopifyCustomer({ orders: 1, addresses: 1 });
+  const email = customer?.emailAddress?.emailAddress ?? "";
+  const staff = await isQuoteStaffEmail(email);
+
+  if (staff) {
+    const admin = createAdminClient();
+    const [{ data: quotesData }, { data: conversation, error }] = await Promise.all([
+      admin
+        .from("quote_conversations")
+        .select("id, product_name, customer_name, status")
+        .order("created_at", { ascending: false })
+        .limit(100),
+      admin.from("quote_conversations").select("*").eq("id", id).maybeSingle(),
+    ]);
+
+    if (error || !conversation) {
+      return (
+        <section className="flex flex-col gap-4">
+          <p className="text-sm text-red-400">{error?.message ?? "Quote not found."}</p>
+          <Link className="text-brand underline underline-offset-4" href={listHref}>
+            {locale === "es" ? "Volver a cotizaciones" : "Back to shipping quotes"}
+          </Link>
+        </section>
+      );
+    }
+
+    const messages = (await listMessages(id)) as QuoteMessage[];
+    const quotes = (quotesData ?? []) as AdminQuoteListItem[];
+    const lang = conversation.locale === "es" ? "es" : "en";
+    const fullscreenHref = `/manage/quotes/${conversation.id}`;
+
+    return (
+      <section className="flex flex-col gap-6">
+        <AdminQuoteInbox
+          quotes={quotes}
+          activeConversation={conversation}
+          messages={messages}
+          hasShopifyAdmin={hasShopifyAdminConfig()}
+          embedded
+          listBasePath="/account/quotes"
+          backHref={listHref}
+          fullscreenHref={fullscreenHref}
+          showShopLink={false}
+          feedback={{
+            error: typeof query.error === "string" ? query.error : undefined,
+            saved: typeof query.saved === "string" ? query.saved : undefined,
+          }}
+        />
+      </section>
+    );
+  }
 
   if (!token) {
     return (
