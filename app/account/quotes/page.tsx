@@ -31,7 +31,7 @@ export default async function AccountQuotesPage({
   }
 
   return (
-    <section className="flex flex-col gap-8">
+    <section className="flex min-w-0 flex-col gap-8">
       <div className="flex flex-col gap-2">
         <p className="text-[10px] font-black tracking-[.18em] text-brand uppercase">
           {locale === "es" ? "Envío internacional" : "International shipping"}

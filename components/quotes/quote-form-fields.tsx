@@ -2,8 +2,8 @@ import type { QuoteLocale } from "@/lib/quotes/copy";
 import { quoteCopy } from "@/lib/quotes/copy";
 
 export const quoteFieldClass =
-  "min-h-11 border border-foreground/20 bg-ink px-3 text-sm normal-case outline-none transition focus:border-brand";
-export const quoteLabelClass = "flex flex-col gap-1 text-[10px] font-bold uppercase";
+  "min-h-11 w-full min-w-0 max-w-full border border-foreground/20 bg-ink px-3 text-sm normal-case outline-none transition focus:border-brand";
+export const quoteLabelClass = "flex min-w-0 flex-col gap-1 text-[10px] font-bold uppercase";
 
 export function QuoteIntakeFields({
   locale,
@@ -26,7 +26,7 @@ export function QuoteIntakeFields({
   return (
     <>
       <p className="text-[10px] font-black tracking-[.12em] text-brand uppercase">{t.formTitle}</p>
-      <div className="grid grid-cols-2 gap-3 max-[520px]:grid-cols-1">
+      <div className="grid min-w-0 grid-cols-2 gap-3 max-[520px]:grid-cols-1">
         <label className={quoteLabelClass}>
           {t.country}
           <input

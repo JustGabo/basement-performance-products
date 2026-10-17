@@ -55,7 +55,7 @@ export function AdminQuoteInbox({
   const listOnly = !activeConversation;
   const listBackHref = backHref ?? listBasePath;
   const shellClass = embedded ? QUOTE_EMBEDDED_SHELL_CLASS : "flex h-dvh flex-col overflow-hidden bg-ink text-foreground";
-  const rowClass = "flex min-h-0 flex-1 flex-col lg:flex-row lg:items-stretch";
+  const rowClass = "flex min-h-0 min-w-0 flex-1 flex-col lg:flex-row lg:items-stretch";
 
   if (listOnly) {
     return (

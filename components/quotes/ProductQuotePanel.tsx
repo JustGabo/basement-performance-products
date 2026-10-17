@@ -133,7 +133,7 @@ export function ProductQuotePanel({
           </button>
         </DialogTrigger>
         <DialogContent
-          className={`max-h-[90svh] gap-0 overflow-y-auto border-foreground/15 bg-panel p-0 text-foreground ${step === "chat" ? "sm:max-w-xl" : "sm:max-w-lg"}`}
+          className={`max-h-[90svh] gap-0 overflow-x-hidden overflow-y-auto border-foreground/15 bg-panel p-0 text-foreground ${step === "chat" ? "sm:max-w-xl" : "sm:max-w-lg"}`}
         >
           <DialogHeader className="gap-1 border-b border-foreground/12 p-5 text-left">
             <DialogTitle className="font-display text-2xl font-bold uppercase leading-tight">
@@ -148,9 +148,9 @@ export function ProductQuotePanel({
             </DialogDescription>
           </DialogHeader>
 
-          <div className="p-5">
+          <div className="min-w-0 overflow-x-hidden p-5">
             {step === "intro" ? (
-              <form className="flex flex-col gap-4" onSubmit={startChat}>
+              <form className="flex min-w-0 flex-col gap-4 overflow-x-hidden" onSubmit={startChat}>
                 <p className="text-[10px] font-black tracking-[.12em] text-brand uppercase">{t.contactSection}</p>
                 <label className={quoteLabelClass}>
                   {t.email}

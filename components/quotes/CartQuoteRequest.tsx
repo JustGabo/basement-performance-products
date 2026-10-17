@@ -101,12 +101,12 @@ export function CartQuoteRequest({ items, locale }: { items: CartItem[]; locale:
           <ArrowRight size={15} />
         </button>
       </DialogTrigger>
-      <DialogContent className="max-h-[90svh] overflow-y-auto border-foreground/15 bg-panel sm:max-w-lg">
+      <DialogContent className="max-h-[90svh] overflow-x-hidden overflow-y-auto border-foreground/15 bg-panel sm:max-w-lg">
         <DialogHeader>
           <DialogTitle className="font-display text-2xl font-bold uppercase">{t.internationalTitle}</DialogTitle>
           <DialogDescription className="text-xs text-foreground/55">{t.internationalBody}</DialogDescription>
         </DialogHeader>
-        <form className="flex flex-col gap-4" onSubmit={startQuote}>
+        <form className="flex min-w-0 flex-col gap-4 overflow-x-hidden" onSubmit={startQuote}>
           {items.length > 1 ? (
             <label className={quoteLabelClass}>
               {locale === "es" ? "Producto a cotizar" : "Product to quote"}
