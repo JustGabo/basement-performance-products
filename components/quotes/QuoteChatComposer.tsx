@@ -1,7 +1,7 @@
 "use client";
 
 import { useRef, useState } from "react";
-import { Send } from "lucide-react";
+import { Loader2, Send } from "lucide-react";
 
 type BaseProps = {
   placeholder: string;
@@ -15,6 +15,7 @@ type ClientComposerProps = BaseProps & {
   onChange: (value: string) => void;
   onSubmit: (event: React.FormEvent) => void | Promise<void>;
   sending?: boolean;
+  sendingLabel?: string;
 };
 
 type ServerComposerProps = BaseProps & {
@@ -71,8 +72,14 @@ function QuoteChatComposerServer({
           required
           disabled={busy}
         />
-        <button className={buttonClass} type="submit" aria-label={sendLabel} disabled={busy}>
-          <Send size={18} />
+        <button
+          className={buttonClass}
+          type="submit"
+          aria-label={sendLabel}
+          aria-busy={pending}
+          disabled={busy}
+        >
+          {pending ? <Loader2 className="animate-spin" size={18} aria-hidden /> : <Send size={18} />}
         </button>
       </div>
     </form>
@@ -84,37 +91,43 @@ function QuoteChatComposerClient({
   onChange,
   onSubmit,
   sending,
+  sendingLabel,
   placeholder,
   sendLabel,
   disabled,
 }: ClientComposerProps) {
   const inFlightRef = useRef(false);
+  const [pending, setPending] = useState(false);
+  const busy = disabled || sending || pending;
+  const statusLabel = sendingLabel ?? sendLabel;
 
   const handleSubmit = async (event: React.FormEvent) => {
     event.preventDefault();
-    if (inFlightRef.current || sending || disabled || !value.trim()) return;
+    if (inFlightRef.current || busy || !value.trim()) return;
     inFlightRef.current = true;
+    setPending(true);
     try {
       await onSubmit(event);
     } finally {
       inFlightRef.current = false;
+      setPending(false);
     }
   };
 
   return (
-    <form className="w-full" onSubmit={handleSubmit}>
-      <div className={barClass}>
+    <form className="w-full touch-manipulation" onSubmit={handleSubmit} aria-busy={busy}>
+      <div className={`${barClass} ${busy ? "opacity-90" : ""}`}>
         <textarea
           className={inputClass}
           placeholder={placeholder}
           rows={1}
           value={value}
-          disabled={disabled || sending}
+          disabled={busy}
           onChange={(event) => onChange(event.target.value)}
           onKeyDown={(event) => {
             if (event.key === "Enter" && !event.shiftKey) {
               event.preventDefault();
-              if (inFlightRef.current || sending || disabled || !value.trim()) return;
+              if (inFlightRef.current || busy || !value.trim()) return;
               event.currentTarget.form?.requestSubmit();
             }
           }}
@@ -122,12 +135,18 @@ function QuoteChatComposerClient({
         <button
           className={buttonClass}
           type="submit"
-          disabled={disabled || sending || !value.trim()}
-          aria-label={sendLabel}
+          disabled={busy || !value.trim()}
+          aria-label={busy ? statusLabel : sendLabel}
+          aria-busy={busy}
         >
-          <Send size={18} />
+          {busy ? <Loader2 className="animate-spin" size={18} aria-hidden /> : <Send size={18} />}
         </button>
       </div>
+      {busy ? (
+        <p className="mt-2 px-1 text-[10px] font-semibold tracking-[.06em] text-foreground/45 uppercase" aria-live="polite">
+          {statusLabel}
+        </p>
+      ) : null}
     </form>
   );
 }

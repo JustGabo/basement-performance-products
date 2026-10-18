@@ -259,7 +259,40 @@ export async function markStaffRead(conversationId: string) {
   if (error) throw new Error(error.message);
 }
 
-export async function sendCustomerMessage(conversation: QuoteConversationRow, body: string) {
+const CUSTOMER_MESSAGE_DEDUPE_MS = 8_000;
+const CUSTOMER_MESSAGE_DEDUPE_SCAN = 20;
+
+function customerMessageAlreadySent(
+  messages: QuoteMessageRow[],
+  body: string,
+  clientMessageId?: string,
+) {
+  const trimmed = body.trim();
+  const cutoff = Date.now() - CUSTOMER_MESSAGE_DEDUPE_MS;
+  let customerTextsChecked = 0;
+
+  for (let index = messages.length - 1; index >= 0 && customerTextsChecked < CUSTOMER_MESSAGE_DEDUPE_SCAN; index -= 1) {
+    const message = messages[index];
+    if (message.role !== "customer" || message.message_type !== "text") continue;
+    customerTextsChecked += 1;
+
+    const payload = message.payload;
+    if (clientMessageId && payload?.clientMessageId === clientMessageId) {
+      return true;
+    }
+    if (message.body.trim() === trimmed && new Date(message.created_at).getTime() >= cutoff) {
+      return true;
+    }
+  }
+
+  return false;
+}
+
+export async function sendCustomerMessage(
+  conversation: QuoteConversationRow,
+  body: string,
+  options?: { clientMessageId?: string },
+) {
   if (conversation.status === "closed") {
     throw new Error("This quote chat is closed.");
   }
@@ -272,10 +305,90 @@ export async function sendCustomerMessage(conversation: QuoteConversationRow, bo
     throw new Error("Message is too long.");
   }
 
+  const clientMessageId = options?.clientMessageId?.trim() || undefined;
+  const existing = await listMessages(conversation.id);
+  if (customerMessageAlreadySent(existing, trimmed, clientMessageId)) {
+    return;
+  }
+
   await insertMessage({
     conversationId: conversation.id,
     role: "customer",
     messageType: "text",
     body: trimmed,
+    payload: clientMessageId ? { clientMessageId } : undefined,
   });
+}
+
+async function loadOwnQuoteTextMessage(input: {
+  conversationId: string;
+  messageId: string;
+  asRole: "customer" | "staff";
+}) {
+  const { data: message, error: loadError } = await admin()
+    .from("quote_messages")
+    .select("id, conversation_id, role, message_type, payload")
+    .eq("id", input.messageId)
+    .eq("conversation_id", input.conversationId)
+    .maybeSingle();
+
+  if (loadError) throw new Error(loadError.message);
+  if (!message) {
+    throw new Error("Message not found.");
+  }
+  if (message.message_type !== "text") {
+    throw new Error("This message cannot be changed.");
+  }
+  if (message.role !== input.asRole) {
+    throw new Error("You can only change your own messages.");
+  }
+
+  return message;
+}
+
+export async function deleteOwnQuoteTextMessage(input: {
+  conversationId: string;
+  messageId: string;
+  asRole: "customer" | "staff";
+}) {
+  await loadOwnQuoteTextMessage(input);
+
+  const { error: deleteError } = await admin()
+    .from("quote_messages")
+    .delete()
+    .eq("id", input.messageId)
+    .eq("conversation_id", input.conversationId);
+
+  if (deleteError) throw new Error(deleteError.message);
+  void broadcastQuoteUpdate(input.conversationId);
+}
+
+export async function updateOwnQuoteTextMessage(input: {
+  conversationId: string;
+  messageId: string;
+  asRole: "customer" | "staff";
+  body: string;
+}) {
+  const existing = await loadOwnQuoteTextMessage(input);
+  const trimmed = input.body.trim();
+  if (!trimmed) {
+    throw new Error("Message is required.");
+  }
+  if (trimmed.length > 2000) {
+    throw new Error("Message is too long.");
+  }
+
+  const payload =
+    existing.payload && typeof existing.payload === "object"
+      ? { ...(existing.payload as Record<string, unknown>), editedAt: new Date().toISOString() }
+      : { editedAt: new Date().toISOString() };
+
+  const { error: updateError } = await admin()
+    .from("quote_messages")
+    .update({ body: trimmed, payload })
+    .eq("id", input.messageId)
+    .eq("conversation_id", input.conversationId);
+
+  if (updateError) throw new Error(updateError.message);
+  void broadcastQuoteUpdate(input.conversationId);
 }

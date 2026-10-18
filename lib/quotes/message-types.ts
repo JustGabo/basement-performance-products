@@ -12,6 +12,22 @@ export type QuoteMessage = {
   created_at: string;
 };
 
+export type QuoteThreadPerspective = "customer" | "staff";
+
+export function canManageOwnQuoteMessage(
+  message: QuoteMessage,
+  perspective: QuoteThreadPerspective,
+  options?: { pending?: boolean },
+) {
+  if (options?.pending) return false;
+  if (message.message_type !== "text") return false;
+  if (perspective === "customer") return message.role === "customer";
+  return message.role === "staff";
+}
+
+/** @deprecated use canManageOwnQuoteMessage */
+export const canDeleteOwnQuoteMessage = canManageOwnQuoteMessage;
+
 /** Stable across SSR and browser (Intl es-DO uses narrow spaces that differ in Node). */
 export function formatMessageTime(iso: string, locale: QuoteLocale) {
   const date = new Date(iso);

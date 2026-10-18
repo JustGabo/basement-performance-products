@@ -59,8 +59,10 @@ export function AdminQuoteInbox({
   const listBackHref = backHref ?? listBasePath;
   const shellClass = embedded
     ? QUOTE_EMBEDDED_SHELL_CLASS
-    : "flex min-h-0 flex-1 flex-col overflow-hidden bg-ink text-foreground";
-  const rowClass = "flex min-h-0 min-w-0 flex-1 flex-col lg:flex-row lg:items-stretch";
+    : "flex h-full min-h-0 flex-1 flex-col overflow-hidden bg-ink text-foreground";
+  const rowClass = "flex h-full min-h-0 min-w-0 flex-1 flex-col lg:flex-row lg:items-stretch";
+  const sidebarColumnClass =
+    "flex min-h-0 min-w-0 flex-1 flex-col self-stretch lg:h-full lg:w-[360px] lg:flex-none";
 
   const sidebar = (active: string | null, className?: string) => (
     <Suspense
@@ -83,7 +85,7 @@ export function AdminQuoteInbox({
     return (
       <div className={shellClass}>
         <div className={rowClass}>
-          {sidebar(null, "h-full max-h-none w-full lg:flex")}
+          <div className={sidebarColumnClass}>{sidebar(null, "h-full w-full")}</div>
           <section className="hidden min-h-0 flex-1 flex-col items-center justify-center gap-2 px-6 text-center lg:flex">
             <p className="text-[10px] font-black tracking-[.14em] text-brand uppercase">International quotes</p>
             <h1 className="font-display text-3xl font-bold uppercase">Select a conversation</h1>
@@ -103,9 +105,7 @@ export function AdminQuoteInbox({
   return (
     <div className={shellClass}>
       <div className={rowClass}>
-        <div className="hidden min-h-0 self-stretch lg:flex lg:h-full lg:w-[360px]">
-          {sidebar(activeId, "h-full w-full")}
-        </div>
+        <div className={`${sidebarColumnClass} hidden lg:flex`}>{sidebar(activeId, "h-full w-full")}</div>
 
         <section className="flex min-h-0 min-w-0 flex-1 flex-col bg-ink">
           <header

@@ -5,6 +5,7 @@ import { rateLimit, requestClientKey, sameOrigin } from "@/lib/rate-limit";
 type MessageBody = {
   token?: string;
   body?: string;
+  clientMessageId?: string;
 };
 
 export async function POST(
@@ -36,7 +37,8 @@ export async function POST(
       return NextResponse.json({ error: "Quote not found." }, { status: 404 });
     }
 
-    await sendCustomerMessage(conversation, body);
+    const clientMessageId = payload.clientMessageId?.trim() || undefined;
+    await sendCustomerMessage(conversation, body, { clientMessageId });
     const messages = await listMessages(id);
     return NextResponse.json({ ok: true, messages });
   } catch (error) {

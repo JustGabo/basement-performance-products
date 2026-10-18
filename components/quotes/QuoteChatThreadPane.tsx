@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useRef } from "react";
+import type { QuoteMessageActionLabels } from "@/components/quotes/QuoteMessageActions";
 import { QuoteMessageThread, type QuoteThreadPerspective } from "@/components/quotes/QuoteMessageThread";
 import type { QuoteLocale } from "@/lib/quotes/copy";
 import type { QuoteMessage } from "@/lib/quotes/message-types";
@@ -11,12 +12,22 @@ export function QuoteChatThreadPane({
   perspective,
   emptyLabel,
   className,
+  actionLabels,
+  editingMessageId,
+  deletingMessageId,
+  onEditMessage,
+  onDeleteMessage,
 }: {
   messages: QuoteMessage[];
   locale: QuoteLocale;
   perspective: QuoteThreadPerspective;
   emptyLabel?: string;
   className?: string;
+  actionLabels?: QuoteMessageActionLabels;
+  editingMessageId?: string | null;
+  deletingMessageId?: string | null;
+  onEditMessage?: (messageId: string, body: string) => void | Promise<void>;
+  onDeleteMessage?: (messageId: string) => void | Promise<void>;
 }) {
   const bottomRef = useRef<HTMLDivElement>(null);
   const lastMessageId = messages.at(-1)?.id ?? null;
@@ -32,6 +43,11 @@ export function QuoteChatThreadPane({
         locale={locale}
         perspective={perspective}
         emptyLabel={emptyLabel}
+        actionLabels={actionLabels}
+        editingMessageId={editingMessageId}
+        deletingMessageId={deletingMessageId}
+        onEditMessage={onEditMessage}
+        onDeleteMessage={onDeleteMessage}
       />
       <div ref={bottomRef} aria-hidden className="h-px w-full shrink-0 scroll-mt-4" />
     </div>

@@ -30,9 +30,8 @@ export async function isQuoteStaffEmail(email: string | null | undefined) {
   return false;
 }
 
-export async function assertQuoteStaffWriter(): Promise<ReturnType<typeof createAdminClient>> {
+async function resolveQuoteStaffAdmin(): Promise<ReturnType<typeof createAdminClient> | null> {
   const { createClient } = await import("@/lib/supabase/server");
-  const { redirect } = await import("next/navigation");
   const supabase = await createClient();
   const { data: claimsData } = await supabase.auth.getClaims();
   const userId = claimsData?.claims?.sub;
@@ -54,6 +53,18 @@ export async function assertQuoteStaffWriter(): Promise<ReturnType<typeof create
   if (await isQuoteStaffEmail(email)) {
     return createAdminClient();
   }
+
+  return null;
+}
+
+export async function optionalQuoteStaffWriter(): Promise<ReturnType<typeof createAdminClient> | null> {
+  return resolveQuoteStaffAdmin();
+}
+
+export async function assertQuoteStaffWriter(): Promise<ReturnType<typeof createAdminClient>> {
+  const { redirect } = await import("next/navigation");
+  const admin = await resolveQuoteStaffAdmin();
+  if (admin) return admin;
 
   redirect("/sign-in?next=/account/quotes&error=Quote+staff+access+required.");
   throw new Error("Admin access required.");
