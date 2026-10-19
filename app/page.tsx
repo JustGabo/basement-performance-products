@@ -3,10 +3,10 @@ import { listCatalogProducts } from "@/lib/commerce/server";
 import { getHomepageContent } from "@/lib/home-content";
 import { getMarketCountry } from "@/lib/commerce/market";
 import { getStoreLocale } from "@/lib/commerce/locale";
-import { shareMetadata, siteDescription, siteName } from "@/lib/seo";
+import { shareMetadata, siteDescription, siteName, siteTagline } from "@/lib/seo";
 
 export const metadata = shareMetadata({
-  title: siteName,
+  title: `${siteName} — ${siteTagline}`,
   description: siteDescription,
   path: "/",
   absoluteTitle: true,

@@ -11,7 +11,8 @@ import { MarketProvider } from "@/components/market/MarketProvider";
 import { getMarketCountry } from "@/lib/commerce/market";
 import { PwaRegister } from "@/components/pwa/PwaRegister";
 import { pwaShortName, pwaThemeColor } from "@/lib/pwa/config";
-import { defaultOgImage, siteDescription, siteName, siteUrl } from "@/lib/seo";
+import { SiteStructuredData } from "@/components/seo/SiteStructuredData";
+import { defaultOgImage, siteDescription, siteName, siteTagline, siteUrl } from "@/lib/seo";
 import "./globals.css";
 
 const geist = Geist({ variable: "--font-geist", subsets: ["latin"] });
@@ -22,6 +23,12 @@ export const metadata: Metadata = {
   title: { default: siteName, template: `%s | ${siteName}` },
   description: siteDescription,
   applicationName: siteName,
+  category: "Automotive",
+  robots: {
+    index: true,
+    follow: true,
+    googleBot: { index: true, follow: true, "max-image-preview": "large" },
+  },
   manifest: "/manifest.webmanifest",
   appleWebApp: {
     capable: true,
@@ -41,13 +48,13 @@ export const metadata: Metadata = {
     siteName,
     locale: "en_US",
     title: siteName,
-    description: siteDescription,
+    description: siteTagline,
     images: [{ url: defaultOgImage, alt: "Basement Performance Products featured build" }],
   },
   twitter: {
     card: "summary_large_image",
     title: siteName,
-    description: siteDescription,
+    description: siteTagline,
     images: [defaultOgImage],
   },
 };
@@ -78,6 +85,7 @@ export default async function RootLayout({ children }: { children: ReactNode }) 
           </TooltipProvider>
         </ThemeProvider>
         <PwaRegister />
+        <SiteStructuredData />
         <Analytics />
       </body>
     </html>

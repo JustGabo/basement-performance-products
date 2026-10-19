@@ -6,7 +6,7 @@ import { CatalogMessage } from "@/components/shop/CatalogMessage";
 import { getCatalog, getCatalogProduct } from "@/lib/commerce/server";
 import { getMarketCountry } from "@/lib/commerce/market";
 import { getStoreLocale } from "@/lib/commerce/locale";
-import { privateMetadata, productJsonLd, shareMetadata } from "@/lib/seo";
+import { breadcrumbJsonLd, privateMetadata, productJsonLd, shareMetadata } from "@/lib/seo";
 
 type ProductPageProps = { params: Promise<{ slug: string }> };
 
@@ -43,8 +43,16 @@ export default async function ProductPage({ params }: ProductPageProps) {
     .filter((candidate) => candidate.id !== product.id)
     .slice(0, 4);
 
-  return <>
-    <JsonLd data={productJsonLd(product)} />
-    <ProductDetail product={product} relatedProducts={relatedProducts} initialLocale={locale} />
-  </>;
+  return (
+    <>
+      <JsonLd data={productJsonLd(product)} />
+      <JsonLd
+        data={breadcrumbJsonLd([
+          { name: "Shop", path: "/shop" },
+          { name: product.name, path: `/products/${product.slug}` },
+        ])}
+      />
+      <ProductDetail product={product} relatedProducts={relatedProducts} initialLocale={locale} />
+    </>
+  );
 }

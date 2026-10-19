@@ -2,8 +2,25 @@ import type { Metadata } from "next";
 import type { StoreProduct } from "@/lib/commerce/domain";
 
 export const siteName = "Basement Performance Products";
-export const siteDescription = "Performance products, real builds and car culture.";
+export const siteTagline = "Shaped in the shop. Proven on the street.";
+export const siteDescription =
+  "Fiberglass and carbon fiber body kits, splitters and aero from the Dominican Republic. Hand-finished, test-fitted, shipped worldwide.";
 export const defaultOgImage = "/images/hero-car.png";
+
+/** Public Instagram — used in Organization schema and contact copy. */
+export const siteInstagramUrl = "https://www.instagram.com/danielsperformanceparts/";
+
+const publicRobots: Metadata["robots"] = {
+  index: true,
+  follow: true,
+  googleBot: {
+    index: true,
+    follow: true,
+    "max-image-preview": "large",
+    "max-snippet": -1,
+    "max-video-preview": -1,
+  },
+};
 
 export function siteUrl() {
   const candidates = [
@@ -29,6 +46,10 @@ export function absoluteUrl(path = "/") {
   return new URL(path, siteUrl()).toString();
 }
 
+export function absoluteImage(src: string) {
+  return src.startsWith("http://") || src.startsWith("https://") ? src : absoluteUrl(src);
+}
+
 export function shareMetadata({
   title,
   description,
@@ -45,34 +66,80 @@ export function shareMetadata({
   absoluteTitle?: boolean;
 }): Metadata {
   const socialTitle = absoluteTitle ? title : `${title} | ${siteName}`;
+  const ogImage = absoluteImage(image);
+  const canonical = absoluteUrl(path);
+
   return {
     title: absoluteTitle ? { absolute: title } : title,
     description,
-    alternates: { canonical: path },
+    robots: publicRobots,
+    alternates: { canonical },
     openGraph: {
       type: "website",
       siteName,
       locale: "en_US",
-      url: path,
+      url: canonical,
       title: socialTitle,
       description,
-      images: [{ url: image, alt: imageAlt ?? title }],
+      images: [{ url: ogImage, alt: imageAlt ?? title }],
     },
     twitter: {
       card: "summary_large_image",
       title: socialTitle,
       description,
-      images: [image],
+      images: [ogImage],
     },
   };
 }
 
 export const privateMetadata: Metadata = {
-  robots: { index: false, follow: false },
+  robots: { index: false, follow: false, nocache: true },
 };
 
-function absoluteImage(src: string) {
-  return src.startsWith("http://") || src.startsWith("https://") ? src : absoluteUrl(src);
+export function organizationJsonLd() {
+  return {
+    "@context": "https://schema.org",
+    "@type": "Organization",
+    name: siteName,
+    url: siteUrl(),
+    logo: absoluteImage("/icons/icon-512x512.png"),
+    description: siteDescription,
+    sameAs: [siteInstagramUrl],
+  };
+}
+
+export function websiteJsonLd() {
+  return {
+    "@context": "https://schema.org",
+    "@type": "WebSite",
+    name: siteName,
+    url: siteUrl(),
+    description: siteDescription,
+    publisher: { "@type": "Organization", name: siteName, url: siteUrl() },
+    potentialAction: {
+      "@type": "SearchAction",
+      target: {
+        "@type": "EntryPoint",
+        urlTemplate: `${absoluteUrl("/shop")}?q={search_term_string}`,
+      },
+      "query-input": "required name=search_term_string",
+    },
+  };
+}
+
+export type BreadcrumbItem = { name: string; path: string };
+
+export function breadcrumbJsonLd(items: BreadcrumbItem[]) {
+  return {
+    "@context": "https://schema.org",
+    "@type": "BreadcrumbList",
+    itemListElement: items.map((item, index) => ({
+      "@type": "ListItem",
+      position: index + 1,
+      name: item.name,
+      item: absoluteUrl(item.path),
+    })),
+  };
 }
 
 export function productJsonLd(product: StoreProduct) {
@@ -99,5 +166,41 @@ export function productJsonLd(product: StoreProduct) {
       availability: inStock ? "https://schema.org/InStock" : "https://schema.org/OutOfStock",
       itemCondition: "https://schema.org/NewCondition",
     },
+  };
+}
+
+export function buildGalleryJsonLd(input: {
+  title: string;
+  description: string;
+  path: string;
+  image: string;
+}) {
+  return {
+    "@context": "https://schema.org",
+    "@type": "Article",
+    headline: input.title,
+    description: input.description,
+    image: [absoluteImage(input.image)],
+    url: absoluteUrl(input.path),
+    author: { "@type": "Organization", name: siteName, url: siteUrl() },
+    publisher: {
+      "@type": "Organization",
+      name: siteName,
+      url: siteUrl(),
+      logo: { "@type": "ImageObject", url: absoluteImage("/icons/icon-512x512.png") },
+    },
+  };
+}
+
+export function itemListJsonLd(items: { name: string; url: string }[]) {
+  return {
+    "@context": "https://schema.org",
+    "@type": "ItemList",
+    itemListElement: items.map((item, index) => ({
+      "@type": "ListItem",
+      position: index + 1,
+      name: item.name,
+      url: item.url,
+    })),
   };
 }

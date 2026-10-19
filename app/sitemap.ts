@@ -3,6 +3,8 @@ import { listCatalogProducts } from "@/lib/commerce/server";
 import { getVehicleBuilds } from "@/lib/home-content";
 import { absoluteUrl } from "@/lib/seo";
 
+export const revalidate = 3600;
+
 const staticRoutes: Array<{ path: string; changeFrequency: MetadataRoute.Sitemap[number]["changeFrequency"]; priority: number }> = [
   { path: "/", changeFrequency: "weekly", priority: 1 },
   { path: "/shop", changeFrequency: "daily", priority: 0.9 },
