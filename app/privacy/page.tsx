@@ -1,4 +1,5 @@
 import { ContentPage } from "@/components/site/ContentPage";
+import { resolveStoreLocale } from "@/lib/commerce/locale";
 import { generatePublicPageMetadata } from "@/lib/seo-page-metadata";
 
 export async function generateMetadata({
@@ -9,8 +10,14 @@ export async function generateMetadata({
   return generatePublicPageMetadata("privacy", "/privacy", searchParams);
 }
 
-export default function PrivacyPage() {
+export default async function PrivacyPage({
+  searchParams,
+}: {
+  searchParams: Promise<Record<string, string | string[] | undefined>>;
+}) {
+  const initialLocale = await resolveStoreLocale(await searchParams);
   return <ContentPage
+    initialLocale={initialLocale}
     eyebrow={{ en: "Your data", es: "Tus datos" }}
     title={{ en: "Privacy.", es: "Privacidad." }}
     intro={{ en: "What we collect when you shop with Basement, why we keep it, and how to ask us to let it go.", es: "Qué recopilamos cuando compras en Basement, para qué lo guardamos y cómo pedirnos que lo soltemos." }}

@@ -2,15 +2,15 @@
 
 import Image from "next/image";
 import Link from "next/link";
-import { useRouter } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
 import { ArrowLeft, ArrowRight, Camera, Check, ChevronLeft, ChevronRight, Minus, Plus, Share2, ShieldCheck, ShoppingCart, Truck, UserRound, Zap } from "lucide-react";
-import { useEffect, useMemo, useState } from "react";
+import { Suspense, useEffect, useMemo, useState } from "react";
 import { CartDrawer } from "@/components/cart/CartDrawer";
 import { useCart } from "@/components/cart/CartProvider";
 import { BrandLogo } from "@/components/site/BrandLogo";
 import { ThemeToggle } from "@/components/theme/ThemeToggle";
 import { formatProductPrice, type StoreProduct } from "@/lib/commerce";
-import { persistStoreLocale } from "@/lib/store-locale-client";
+import { localeFromLangParam, persistStoreLocale } from "@/lib/store-locale-client";
 import { ProductQuotePanel } from "@/components/quotes/ProductQuotePanel";
 
 type Locale = "en" | "es";
@@ -57,8 +57,10 @@ function buildGallery(product: StoreProduct) {
   return images.filter((image, index) => images.findIndex((candidate) => candidate.src === image.src) === index);
 }
 
-export function ProductDetail({ product, relatedProducts, initialLocale }: { product: StoreProduct; relatedProducts: StoreProduct[]; initialLocale: Locale }) {
+function ProductDetailClient({ product, relatedProducts, initialLocale }: { product: StoreProduct; relatedProducts: StoreProduct[]; initialLocale: Locale }) {
   const router = useRouter();
+  const searchParams = useSearchParams();
+  const urlLocale = localeFromLangParam(searchParams.get("lang"));
   const { addItem } = useCart();
   const images = useMemo(() => buildGallery(product), [product]);
   const [locale, setLocale] = useState<Locale>(initialLocale);
@@ -70,21 +72,11 @@ export function ProductDetail({ product, relatedProducts, initialLocale }: { pro
   const visibleImages = images.slice(thumbnailStart, thumbnailStart + 4);
 
   useEffect(() => {
-    const timer = window.setTimeout(() => {
-      const stored = window.localStorage.getItem("basement-locale");
-      if (stored === "en" || stored === "es") {
-        setLocale(stored);
-        document.documentElement.setAttribute("lang", stored);
-        if (stored !== initialLocale) {
-          persistStoreLocale(stored);
-          router.refresh();
-        }
-      } else {
-        persistStoreLocale(initialLocale);
-      }
-    }, 0);
-    return () => window.clearTimeout(timer);
-  }, [initialLocale, router]);
+    const resolved = urlLocale ?? initialLocale;
+    setLocale(resolved);
+    persistStoreLocale(resolved);
+    if (urlLocale && urlLocale !== initialLocale) router.refresh();
+  }, [urlLocale, initialLocale, router]);
 
   const selectImage = (index: number) => {
     const next = (index + images.length) % images.length;
@@ -179,4 +171,12 @@ export function ProductDetail({ product, relatedProducts, initialLocale }: { pro
       </div>
     </footer>
   </main>;
+}
+
+export function ProductDetail(props: { product: StoreProduct; relatedProducts: StoreProduct[]; initialLocale: Locale }) {
+  return (
+    <Suspense fallback={null}>
+      <ProductDetailClient {...props} />
+    </Suspense>
+  );
 }

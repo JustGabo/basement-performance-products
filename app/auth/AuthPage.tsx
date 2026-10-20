@@ -2,12 +2,17 @@
 
 import Image from "next/image";
 import Link from "next/link";
-import { useRouter } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
 import { ArrowLeft, ArrowRight, Eye, EyeOff } from "lucide-react";
-import { FormEvent, useEffect, useState } from "react";
+import { FormEvent, Suspense, useEffect, useState } from "react";
 import { getCustomerAuthClient } from "@/lib/customer-auth/client";
 import { ThemeToggle } from "@/components/theme/ThemeToggle";
-import { persistStoreLocale } from "@/lib/store-locale-client";
+import {
+  localeFromLangParam,
+  persistStoreLocale,
+  switchStoreLocale,
+  withStoreLocaleHref,
+} from "@/lib/store-locale-client";
 
 type AuthMode = "sign-in" | "sign-up";
 type Locale = "en" | "es";
@@ -32,7 +37,7 @@ const copy = {
 const fieldClass = "h-[50px] w-full rounded-sm border border-foreground/20 bg-ink px-4 text-base text-foreground outline-none transition focus:border-brand focus:ring-3 focus:ring-brand/10 [@media(max-height:820px)]:h-[41px]";
 const labelClass = "grid gap-2 text-[11px] font-bold tracking-[.06em] text-foreground/80 uppercase [@media(max-height:820px)]:gap-1";
 
-export default function AuthPage({
+function AuthPageClient({
   mode,
   defaultNext = "/account",
   staff = false,
@@ -42,30 +47,33 @@ export default function AuthPage({
   staff?: boolean;
 }) {
   const router = useRouter();
+  const searchParams = useSearchParams();
+  const urlLocale = localeFromLangParam(searchParams.get("lang"));
   const [locale, setLocale] = useState<Locale>("en");
   const [passwordVisible, setPasswordVisible] = useState(false);
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
   const t = copy[locale];
   const content = mode === "sign-in" ? t.signIn : t.signUp;
-  const switchHref = mode === "sign-in" ? "/sign-up" : "/sign-in";
+  const switchHref = withStoreLocaleHref(mode === "sign-in" ? "/sign-up" : "/sign-in", locale);
+  const homeHref = withStoreLocaleHref("/", locale);
+  const shopHref = withStoreLocaleHref("/shop", locale);
 
   useEffect(() => {
     const timer = window.setTimeout(() => {
       const stored = window.localStorage.getItem("basement-locale");
-      if (stored === "en" || stored === "es") {
-        setLocale(stored);
-        document.documentElement.setAttribute("lang", stored);
-      }
+      const resolved = urlLocale ?? (stored === "en" || stored === "es" ? stored : "en");
+      setLocale(resolved);
+      persistStoreLocale(resolved);
       const queryError = new URLSearchParams(window.location.search).get("error");
       if (queryError) setError(queryError);
     }, 0);
     return () => window.clearTimeout(timer);
-  }, []);
+  }, [urlLocale]);
 
   const changeLocale = (next: Locale) => {
     setLocale(next);
-    persistStoreLocale(next);
+    switchStoreLocale(next, router);
   };
 
   const handleSubmit = async (event: FormEvent<HTMLFormElement>) => {
@@ -117,14 +125,14 @@ export default function AuthPage({
     <div aria-hidden="true" className="pointer-events-none fixed inset-0 opacity-5 dark:opacity-20 [background-image:linear-gradient(rgba(128,128,128,.12)_1px,transparent_1px),linear-gradient(90deg,rgba(128,128,128,.12)_1px,transparent_1px)] [background-size:64px_64px] [mask-image:linear-gradient(to_bottom,transparent,black_35%,transparent)]" />
 
     <header className="safe-top-header absolute top-0 left-1/2 z-20 flex h-[72px] w-[min(calc(100%_-_64px),1480px)] -translate-x-1/2 items-center justify-between max-[600px]:h-[58px] max-[600px]:w-[calc(100%_-_32px)]">
-      <Link href="/" className="flex items-center gap-2.5 text-xs font-bold tracking-[.08em] text-foreground/65 uppercase transition hover:text-brand max-[600px]:text-[9px]"><ArrowLeft className="text-brand" size={17} />{t.back}</Link>
+      <Link href={shopHref} className="flex items-center gap-2.5 text-xs font-bold tracking-[.08em] text-foreground/65 uppercase transition hover:text-brand max-[600px]:text-[9px]"><ArrowLeft className="text-brand" size={17} />{t.back}</Link>
       <div className="flex items-center gap-2"><div className="flex items-center gap-1 rounded-full border border-foreground/15 bg-panel/70 p-1" role="group" aria-label={t.language}>
         {(["en", "es"] as const).map((item, index) => <span className="contents" key={item}>{index > 0 && <i className="not-italic text-foreground/30">/</i>}<button className={`h-7 min-w-8.5 cursor-pointer rounded-full border-0 text-[10px] font-extrabold ${locale === item ? "bg-brand text-black" : "bg-transparent text-foreground/45"}`} onClick={() => changeLocale(item)} aria-pressed={locale === item}>{item.toUpperCase()}</button></span>)}
       </div><ThemeToggle compact /></div>
     </header>
 
     <section className="safe-auth-section relative z-10 mx-auto flex min-h-svh w-[min(calc(100%_-_32px),500px)] flex-col items-center justify-center gap-3 pt-[72px] pb-7 [@media(max-height:820px)]:gap-0.5 [@media(max-height:820px)]:pt-[58px] [@media(max-height:820px)]:pb-3.5 max-[600px]:gap-1 max-[600px]:pt-[58px] max-[600px]:pb-5" aria-labelledby="auth-title">
-      <Link href="/" className="block w-[clamp(235px,22vw,330px)] [@media(max-height:820px)]:w-[185px] max-[600px]:w-[205px]" aria-label="Basement Performance Products home">
+      <Link href={homeHref} className="block w-[clamp(235px,22vw,330px)] [@media(max-height:820px)]:w-[185px] max-[600px]:w-[205px]" aria-label="Basement Performance Products home">
         <Image className="h-auto w-full" src="/images/basement-auth-logo-transparent.png" alt="Basement Performance Products" width={1536} height={1024} priority />
       </Link>
 
@@ -162,9 +170,21 @@ export default function AuthPage({
 
         <div className="flex flex-col gap-3.5 border-t border-foreground/12 pt-4.5 [@media(max-height:820px)]:gap-2 [@media(max-height:820px)]:pt-3">
           {!staff && <p className="text-center text-xs text-foreground/60">{content.switchLead} <Link className="text-brand underline underline-offset-3" href={switchHref}>{content.switchAction}</Link></p>}
-          <p className="text-center text-[9px] leading-4 text-foreground/40">{t.legal} <Link className="text-brand underline underline-offset-3" href="/terms">{t.terms}</Link> {t.and} <Link className="text-brand underline underline-offset-3" href="/privacy">{t.privacy}</Link>.</p>
+          <p className="text-center text-[9px] leading-4 text-foreground/40">{t.legal} <Link className="text-brand underline underline-offset-3" href={withStoreLocaleHref("/terms", locale)}>{t.terms}</Link> {t.and} <Link className="text-brand underline underline-offset-3" href={withStoreLocaleHref("/privacy", locale)}>{t.privacy}</Link>.</p>
         </div>
       </div>
     </section>
   </main>;
+}
+
+export default function AuthPage(props: {
+  mode: AuthMode;
+  defaultNext?: string;
+  staff?: boolean;
+}) {
+  return (
+    <Suspense fallback={null}>
+      <AuthPageClient {...props} />
+    </Suspense>
+  );
 }

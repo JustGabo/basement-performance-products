@@ -1,4 +1,5 @@
 import { ContentPage } from "@/components/site/ContentPage";
+import { resolveStoreLocale } from "@/lib/commerce/locale";
 import { generatePublicPageMetadata } from "@/lib/seo-page-metadata";
 
 export async function generateMetadata({
@@ -9,9 +10,15 @@ export async function generateMetadata({
   return generatePublicPageMetadata("about", "/about", searchParams);
 }
 
-export default function AboutPage() {
+export default async function AboutPage({
+  searchParams,
+}: {
+  searchParams: Promise<Record<string, string | string[] | undefined>>;
+}) {
+  const initialLocale = await resolveStoreLocale(await searchParams);
   return (
     <ContentPage
+      initialLocale={initialLocale}
       eyebrow={{ en: "Our garage", es: "Nuestro taller" }}
       title={{ en: "Built in the Dominican Republic.", es: "Hecho en República Dominicana." }}
       intro={{

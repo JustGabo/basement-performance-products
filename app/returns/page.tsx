@@ -1,4 +1,5 @@
 import { ContentPage } from "@/components/site/ContentPage";
+import { resolveStoreLocale } from "@/lib/commerce/locale";
 import { generatePublicPageMetadata } from "@/lib/seo-page-metadata";
 
 export async function generateMetadata({
@@ -9,8 +10,14 @@ export async function generateMetadata({
   return generatePublicPageMetadata("returns", "/returns", searchParams);
 }
 
-export default function ReturnsPage() {
+export default async function ReturnsPage({
+  searchParams,
+}: {
+  searchParams: Promise<Record<string, string | string[] | undefined>>;
+}) {
+  const initialLocale = await resolveStoreLocale(await searchParams);
   return <ContentPage
+    initialLocale={initialLocale}
     eyebrow={{ en: "Before you bolt it on", es: "Antes de instalar" }}
     title={{ en: "Returns.", es: "Devoluciones." }}
     intro={{ en: "Check the part on the car before paint, drill or install. This is how a return works.", es: "Revisa la pieza en el carro antes de pintar, taladrar o instalar. Así funciona una devolución." }}

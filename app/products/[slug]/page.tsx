@@ -5,7 +5,7 @@ import { ProductDetail } from "@/components/products/ProductDetail";
 import { CatalogMessage } from "@/components/shop/CatalogMessage";
 import { getCatalog, getCatalogProduct } from "@/lib/commerce/server";
 import { getMarketCountry } from "@/lib/commerce/market";
-import { getStoreLocale, resolveStoreLocale } from "@/lib/commerce/locale";
+import { resolveStoreLocale } from "@/lib/commerce/locale";
 import { breadcrumbJsonLd, privateMetadata, productJsonLd, shareMetadata } from "@/lib/seo";
 
 type ProductPageProps = {
@@ -41,11 +41,12 @@ export async function generateMetadata({ params, searchParams }: ProductPageProp
   );
 }
 
-export default async function ProductPage({ params }: ProductPageProps) {
+export default async function ProductPage({ params, searchParams }: ProductPageProps) {
   const { slug } = await params;
+  const query = await searchParams;
   const [country, locale] = await Promise.all([
     getMarketCountry(),
-    getStoreLocale(),
+    resolveStoreLocale(query),
   ]);
   const { product, unavailable } = await getCatalogProduct(slug, country, locale);
   if (unavailable) return <CatalogMessage locale={locale} kind="unavailable" />;

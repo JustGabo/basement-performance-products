@@ -1,4 +1,5 @@
 import { ContentPage } from "@/components/site/ContentPage";
+import { resolveStoreLocale } from "@/lib/commerce/locale";
 import { generatePublicPageMetadata } from "@/lib/seo-page-metadata";
 
 export async function generateMetadata({
@@ -9,8 +10,14 @@ export async function generateMetadata({
   return generatePublicPageMetadata("terms", "/terms", searchParams);
 }
 
-export default function TermsPage() {
+export default async function TermsPage({
+  searchParams,
+}: {
+  searchParams: Promise<Record<string, string | string[] | undefined>>;
+}) {
+  const initialLocale = await resolveStoreLocale(await searchParams);
   return <ContentPage
+    initialLocale={initialLocale}
     eyebrow={{ en: "The rules", es: "Las reglas" }}
     title={{ en: "Terms.", es: "Términos." }}
     intro={{ en: "These are the rules for using the site and buying from Basement Performance Products. Ordering means you accept them.", es: "Estas son las reglas para usar el sitio y comprar en Basement Performance Products. Hacer un pedido significa que las aceptas." }}

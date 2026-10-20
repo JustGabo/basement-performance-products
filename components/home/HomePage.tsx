@@ -2,7 +2,7 @@
 
 import Image from "next/image";
 import Link from "next/link";
-import { useRouter } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
 import { ArrowRight, Camera, ChevronLeft, ChevronRight, Menu, Search, UserRound, Zap } from "lucide-react";
 import { useEffect, useRef, useState } from "react";
 import { useCart } from "@/components/cart/CartProvider";
@@ -13,7 +13,12 @@ import { type StoreProduct } from "@/lib/commerce";
 import type { BuildGalleryItem, HeroSlide } from "@/lib/home-content";
 import { translations, type Locale } from "@/app/i18n";
 import { ProductCard } from "@/components/shop/ProductCard";
-import { persistStoreLocale } from "@/lib/store-locale-client";
+import {
+  localeFromLangParam,
+  persistStoreLocale,
+  switchStoreLocale,
+  withStoreLocaleHref,
+} from "@/lib/store-locale-client";
 
 const shell = "mx-auto w-[min(1480px,calc(100%_-_56px))] max-[700px]:w-[calc(100%_-_32px)]";
 const display = "font-display font-bold uppercase";
@@ -45,6 +50,8 @@ function LocaleSwitch({ locale, label, onChange }: { locale: Locale; label: stri
 
 export function HomePage({ products, catalogUnavailable = false, heroSlides, buildGallery, initialLocale }: { products: StoreProduct[]; catalogUnavailable?: boolean; heroSlides: HeroSlide[]; buildGallery: BuildGalleryItem[]; initialLocale: Locale }) {
   const router = useRouter();
+  const searchParams = useSearchParams();
+  const urlLocale = localeFromLangParam(searchParams.get("lang"));
   const { addItem, totalItems } = useCart();
   const [activeSlide, setActiveSlide] = useState(0);
   const [productPage, setProductPage] = useState(1);
@@ -63,26 +70,16 @@ export function HomePage({ products, catalogUnavailable = false, heroSlides, bui
 
   const changeLocale = (next: Locale) => {
     setLocale(next);
-    persistStoreLocale(next);
-    router.refresh();
+    switchStoreLocale(next, router);
   };
 
+  const href = (path: string) => withStoreLocaleHref(path, locale);
+
   useEffect(() => {
-    const restoreLocale = window.setTimeout(() => {
-      const storedLocale = window.localStorage.getItem("basement-locale");
-      if (storedLocale === "en" || storedLocale === "es") {
-        setLocale(storedLocale);
-        document.documentElement.setAttribute("lang", storedLocale);
-        if (storedLocale !== initialLocale) {
-          persistStoreLocale(storedLocale);
-          router.refresh();
-        }
-      } else {
-        persistStoreLocale(initialLocale);
-      }
-    }, 0);
-    return () => window.clearTimeout(restoreLocale);
-  }, [initialLocale, router]);
+    const resolved = urlLocale ?? initialLocale;
+    setLocale(resolved);
+    persistStoreLocale(resolved);
+  }, [urlLocale, initialLocale]);
 
   useEffect(() => {
     const closeOnOutside = (event: PointerEvent) => {
@@ -109,9 +106,9 @@ export function HomePage({ products, catalogUnavailable = false, heroSlides, bui
   return <main id="top" className="overflow-hidden bg-ink text-foreground transition-colors">
     <header className="safe-top-header fixed top-0 left-0 z-30 grid min-h-21 w-full grid-cols-[1fr_auto_1fr] [grid-template-areas:'nav_logo_tools'] items-center gap-9 border-b border-foreground/12 bg-ink/88 px-[max(28px,calc((100vw-1480px)/2))] shadow-xl backdrop-blur-xl max-[1000px]:[grid-template-areas:'menu_logo_tools'] max-[700px]:min-h-18 max-[700px]:gap-4 max-[700px]:px-5">
       <Logo />
-      <nav className="[grid-area:nav] flex gap-8 text-[10px] font-bold uppercase max-[1000px]:hidden" aria-label="Main navigation"><Link className="transition hover:text-brand" href="/shop">{t.nav.shop}</Link><Link className="transition hover:text-brand" href="/builds">{t.nav.builds}</Link><Link className="transition hover:text-brand" href="/about">{t.nav.about}</Link></nav>
-      <div className="[grid-area:tools] flex items-center justify-self-end gap-4 max-[1000px]:hidden"><LocaleSwitch locale={locale} label={t.language} onChange={changeLocale} /><ThemeToggle compact /><Link className="p-1 transition hover:text-brand" aria-label={t.header.search} href="/shop?focus=search"><Search size={20} /></Link><Link className="p-1" aria-label={t.header.contact} href="/account"><UserRound size={20} /></Link><CartDrawer locale={locale} /></div>
-      <details ref={menuRef} className="[grid-area:menu] relative hidden w-max justify-self-start max-[1000px]:block"><summary className="flex cursor-pointer list-none p-1 -m-1" aria-label={t.header.menu}><Menu size={24} /></summary><div className="absolute top-10 left-0 grid min-w-52 gap-4 border border-foreground/15 bg-panel/95 p-5 text-xs uppercase shadow-2xl"><div className="flex items-center justify-between gap-3"><LocaleSwitch locale={locale} label={t.language} onChange={changeLocale} /><ThemeToggle compact /></div><Link href="/shop">{t.nav.shop}</Link><Link href="/builds">{t.nav.builds}</Link><Link href="/about">{t.nav.about}</Link><Link href="/account">{t.header.contact}</Link><Link href="/cart">{totalItems} {t.header.cart}</Link></div></details>
+      <nav className="[grid-area:nav] flex gap-8 text-[10px] font-bold uppercase max-[1000px]:hidden" aria-label="Main navigation"><Link className="transition hover:text-brand" href={href("/shop")}>{t.nav.shop}</Link><Link className="transition hover:text-brand" href={href("/builds")}>{t.nav.builds}</Link><Link className="transition hover:text-brand" href={href("/about")}>{t.nav.about}</Link></nav>
+      <div className="[grid-area:tools] flex items-center justify-self-end gap-4 max-[1000px]:hidden"><LocaleSwitch locale={locale} label={t.language} onChange={changeLocale} /><ThemeToggle compact /><Link className="p-1 transition hover:text-brand" aria-label={t.header.search} href={href("/shop?focus=search")}><Search size={20} /></Link><Link className="p-1" aria-label={t.header.contact} href="/account"><UserRound size={20} /></Link><CartDrawer locale={locale} /></div>
+      <details ref={menuRef} className="[grid-area:menu] relative hidden w-max justify-self-start max-[1000px]:block"><summary className="flex cursor-pointer list-none p-1 -m-1" aria-label={t.header.menu}><Menu size={24} /></summary><div className="absolute top-10 left-0 grid min-w-52 gap-4 border border-foreground/15 bg-panel/95 p-5 text-xs uppercase shadow-2xl"><div className="flex items-center justify-between gap-3"><LocaleSwitch locale={locale} label={t.language} onChange={changeLocale} /><ThemeToggle compact /></div><Link href={href("/shop")}>{t.nav.shop}</Link><Link href={href("/builds")}>{t.nav.builds}</Link><Link href={href("/about")}>{t.nav.about}</Link><Link href="/account">{t.header.contact}</Link><Link href="/cart">{totalItems} {t.header.cart}</Link></div></details>
       <div className="[grid-area:tools] hidden items-center justify-self-end max-[1000px]:flex"><CartDrawer locale={locale} /></div>
     </header>
 
@@ -125,7 +122,7 @@ export function HomePage({ products, catalogUnavailable = false, heroSlides, bui
             <h1 className={`${display} text-[clamp(56px,6.5vw,104px)] leading-[.9] tracking-[-.04em] max-[700px]:text-[clamp(26px,7.6vw,34px)] max-[700px]:leading-[1.05]`}>{t.hero.titleOne}<br />{t.hero.titleTwo}</h1>
           </div>
           <p className="max-w-[52ch] text-base leading-7 text-white/75 max-[700px]:text-sm max-[700px]:leading-6">{t.hero.copy}</p>
-          <div className="flex gap-3 max-[700px]:flex-col"><Link className={`${button} border-brand bg-brand text-black hover:bg-transparent hover:text-brand max-[700px]:w-full max-[700px]:justify-between`} href="/shop">{t.hero.primary}<ArrowRight size={17} /></Link><Link className={`${button} border-brand text-brand hover:bg-brand hover:text-black max-[700px]:w-full`} href="/builds">{t.hero.secondary}</Link></div>
+          <div className="flex gap-3 max-[700px]:flex-col"><Link className={`${button} border-brand bg-brand text-black hover:bg-transparent hover:text-brand max-[700px]:w-full max-[700px]:justify-between`} href={href("/shop")}>{t.hero.primary}<ArrowRight size={17} /></Link><Link className={`${button} border-brand text-brand hover:bg-brand hover:text-black max-[700px]:w-full`} href={href("/builds")}>{t.hero.secondary}</Link></div>
         </div>
       </div>
     </section>
@@ -139,7 +136,7 @@ export function HomePage({ products, catalogUnavailable = false, heroSlides, bui
         <p className="text-[10px] font-black tracking-[.16em] text-brand uppercase">{t.products.kicker}</p>
         <div className="flex items-center justify-between gap-5 max-[700px]:flex-col max-[700px]:items-stretch">
           <h2 className={`${display} text-[clamp(42px,5vw,72px)] leading-none max-[700px]:text-[40px]`}>{t.products.title}</h2>
-          <Link className={`${button} border-brand text-brand hover:bg-brand hover:text-black max-[700px]:min-h-12 max-[700px]:w-full max-[700px]:justify-between max-[700px]:px-4 max-[700px]:text-[9px]`} href="/shop">
+          <Link className={`${button} border-brand text-brand hover:bg-brand hover:text-black max-[700px]:min-h-12 max-[700px]:w-full max-[700px]:justify-between max-[700px]:px-4 max-[700px]:text-[9px]`} href={href("/shop")}>
             {t.products.viewAll}
             <ArrowRight size={17} />
           </Link>
@@ -167,7 +164,7 @@ export function HomePage({ products, catalogUnavailable = false, heroSlides, bui
     <section className={`${shell} flex flex-col gap-6 py-10 max-[700px]:gap-5 max-[700px]:py-8`} id="build-gallery">
       <div className="flex items-end justify-between gap-5 max-[700px]:flex-col max-[700px]:items-stretch max-[700px]:gap-5">
         <div className="flex flex-col gap-2"><p className="text-[10px] font-black tracking-[.16em] text-brand uppercase">{t.gallery.kicker}</p><h2 className={`${display} text-[clamp(44px,5vw,70px)] leading-none max-[700px]:text-[44px]`}>{t.gallery.title}</h2></div>
-        {buildGallery.length > 0 && <Link className={`${button} border-brand text-brand hover:bg-brand hover:text-black max-[700px]:min-h-12 max-[700px]:w-full max-[700px]:justify-between max-[700px]:px-4 max-[700px]:text-[9px]`} href="/builds">{t.gallery.viewAll}<ArrowRight size={17} /></Link>}
+        {buildGallery.length > 0 && <Link className={`${button} border-brand text-brand hover:bg-brand hover:text-black max-[700px]:min-h-12 max-[700px]:w-full max-[700px]:justify-between max-[700px]:px-4 max-[700px]:text-[9px]`} href={href("/builds")}>{t.gallery.viewAll}<ArrowRight size={17} /></Link>}
       </div>
       {buildGallery.length > 0 ? <div className="grid auto-rows-[205px] grid-cols-2 gap-4 min-[1000px]:grid-cols-3 max-[700px]:auto-rows-[235px] max-[700px]:grid-cols-1 max-[700px]:gap-3">{buildGallery.map((item, index) => <article className={`group relative overflow-hidden rounded-sm border border-foreground/20 text-white ${index < 2 ? "min-[1000px]:row-span-2" : ""}`} key={item.id}><Link className="absolute inset-0" href={item.href} aria-label={`${t.gallery.view}: ${item.meta} ${item.title}`}><Image className="object-cover transition duration-500 group-hover:scale-[1.025]" src={item.src} alt={`${item.meta} ${item.title}`} fill sizes="(max-width: 700px) 100vw, (min-width: 1000px) 33vw, 50vw" unoptimized={isShopifyCdnImage(item.src)} /><div className="absolute inset-0 bg-gradient-to-t from-black/90 via-transparent to-transparent" /></Link><div className="pointer-events-none absolute right-5 bottom-5 left-5 flex items-end justify-between gap-4 max-[700px]:right-4 max-[700px]:bottom-4 max-[700px]:left-4"><div className="flex flex-col gap-1"><span className="text-[9px] font-black tracking-[.12em] text-brand uppercase">{item.meta}</span><h3 className={`${display} text-3xl max-[700px]:text-2xl`}>{item.title}</h3></div><span className="rounded-full bg-white px-4 py-2 text-[9px] font-black text-black uppercase max-[700px]:hidden">{t.gallery.view}</span></div></article>)}</div> : <div className="flex flex-col gap-2 border border-dashed border-foreground/20 px-6 py-16"><h3 className={`${display} text-3xl`}>{t.gallery.emptyTitle}</h3><p className="max-w-md text-sm text-foreground/55">{t.gallery.emptyCopy}</p></div>}
     </section>
@@ -186,11 +183,11 @@ export function HomePage({ products, catalogUnavailable = false, heroSlides, bui
 
     <footer className={`${shell} grid grid-cols-[1.5fr_repeat(3,1fr)_1fr] gap-10 py-10 text-[10px] max-[1000px]:grid-cols-[1.5fr_repeat(3,1fr)] max-[700px]:grid-cols-2 max-[700px]:gap-8`}>
       <div className="flex flex-col gap-4 max-[700px]:col-span-full"><Logo /><p className="text-foreground/45">{t.footer.motto}</p></div>
-      <div className="flex flex-col gap-2.5"><h4 className="font-black uppercase">{t.footer.shop}</h4><div className="flex flex-col gap-1.5"><Link className="text-foreground/65 hover:text-brand" href="/shop">{t.footer.allProducts}</Link><Link className="text-foreground/65 hover:text-brand" href="/shop">{t.footer.aero}</Link><Link className="text-foreground/65 hover:text-brand" href="/shop">{t.footer.bodyKits}</Link><Link className="text-foreground/65 hover:text-brand" href="/cart">{t.footer.cart}</Link></div></div>
-      <div className="flex flex-col gap-2.5"><h4 className="font-black uppercase">{t.footer.company}</h4><div className="flex flex-col gap-1.5"><Link className="text-foreground/65 hover:text-brand" href="/about">{t.footer.about}</Link><Link className="text-foreground/65 hover:text-brand" href="/contact">{t.footer.contact}</Link><Link className="text-foreground/65 hover:text-brand" href="/shipping">{t.footer.shipping}</Link><Link className="text-foreground/65 hover:text-brand" href="/returns">{t.footer.returns}</Link></div></div>
+      <div className="flex flex-col gap-2.5"><h4 className="font-black uppercase">{t.footer.shop}</h4><div className="flex flex-col gap-1.5"><Link className="text-foreground/65 hover:text-brand" href={href("/shop")}>{t.footer.allProducts}</Link><Link className="text-foreground/65 hover:text-brand" href={href("/shop")}>{t.footer.aero}</Link><Link className="text-foreground/65 hover:text-brand" href={href("/shop")}>{t.footer.bodyKits}</Link><Link className="text-foreground/65 hover:text-brand" href="/cart">{t.footer.cart}</Link></div></div>
+      <div className="flex flex-col gap-2.5"><h4 className="font-black uppercase">{t.footer.company}</h4><div className="flex flex-col gap-1.5"><Link className="text-foreground/65 hover:text-brand" href={href("/about")}>{t.footer.about}</Link><Link className="text-foreground/65 hover:text-brand" href={href("/contact")}>{t.footer.contact}</Link><Link className="text-foreground/65 hover:text-brand" href={href("/shipping")}>{t.footer.shipping}</Link><Link className="text-foreground/65 hover:text-brand" href={href("/returns")}>{t.footer.returns}</Link></div></div>
       <div className="flex flex-col gap-2"><h4 className="font-black uppercase">{t.footer.follow}</h4><div className="flex gap-2.5"><a className="grid size-8.5 place-items-center border border-foreground/25 transition hover:border-brand hover:text-brand" href="https://www.instagram.com/danielsperformanceparts/" target="_blank" rel="noreferrer" aria-label="Instagram"><Camera size={16} /></a></div></div>
       <p className="border-l border-foreground/35 pl-7 text-[11px] leading-5 font-black tracking-[.2em] text-brand uppercase max-[1000px]:hidden">{t.footer.callout.map((line) => <span key={line}>{line}<br /></span>)}</p>
-      <div className="col-span-full flex justify-between border-t border-foreground/15 pt-5 text-foreground/40 max-[700px]:flex-col max-[700px]:gap-3"><span>{t.footer.copyright}</span><span className="flex flex-wrap gap-4"><Link className="hover:text-brand" href="/terms">{t.footer.terms}</Link><Link className="hover:text-brand" href="/privacy">{t.footer.privacy}</Link><Link className="hover:text-brand" href="/contact">{t.footer.contact}</Link></span></div>
+      <div className="col-span-full flex justify-between border-t border-foreground/15 pt-5 text-foreground/40 max-[700px]:flex-col max-[700px]:gap-3"><span>{t.footer.copyright}</span><span className="flex flex-wrap gap-4"><Link className="hover:text-brand" href={href("/terms")}>{t.footer.terms}</Link><Link className="hover:text-brand" href={href("/privacy")}>{t.footer.privacy}</Link><Link className="hover:text-brand" href={href("/contact")}>{t.footer.contact}</Link></span></div>
     </footer>
   </main>;
 }

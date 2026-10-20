@@ -1,4 +1,5 @@
 import { ContentPage } from "@/components/site/ContentPage";
+import { resolveStoreLocale } from "@/lib/commerce/locale";
 import { generatePublicPageMetadata } from "@/lib/seo-page-metadata";
 
 export async function generateMetadata({
@@ -9,9 +10,15 @@ export async function generateMetadata({
   return generatePublicPageMetadata("contact", "/contact", searchParams);
 }
 
-export default function ContactPage() {
+export default async function ContactPage({
+  searchParams,
+}: {
+  searchParams: Promise<Record<string, string | string[] | undefined>>;
+}) {
+  const initialLocale = await resolveStoreLocale(await searchParams);
   return (
     <ContentPage
+      initialLocale={initialLocale}
       eyebrow={{ en: "The shop", es: "El taller" }}
       title={{ en: "Talk to the shop.", es: "Habla con el taller." }}
       intro={{

@@ -1,4 +1,5 @@
 import { ContentPage } from "@/components/site/ContentPage";
+import { resolveStoreLocale } from "@/lib/commerce/locale";
 import { generatePublicPageMetadata } from "@/lib/seo-page-metadata";
 
 export async function generateMetadata({
@@ -9,8 +10,14 @@ export async function generateMetadata({
   return generatePublicPageMetadata("shipping", "/shipping", searchParams);
 }
 
-export default function ShippingPage() {
+export default async function ShippingPage({
+  searchParams,
+}: {
+  searchParams: Promise<Record<string, string | string[] | undefined>>;
+}) {
+  const initialLocale = await resolveStoreLocale(await searchParams);
   return <ContentPage
+    initialLocale={initialLocale}
     eyebrow={{ en: "From the shop", es: "Desde el taller" }}
     title={{ en: "Shipping.", es: "Envíos." }}
     intro={{ en: "Parts leave the Dominican Republic ready to fit. This is how an order moves from the shop to the car.", es: "Las piezas salen de República Dominicana listas para ajustar. Así pasa un pedido del taller al carro." }}
