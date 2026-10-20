@@ -1,7 +1,7 @@
 "use client";
 
 import { useRef, useState } from "react";
-import { MessageSquare } from "lucide-react";
+import { MessageSquare, Sparkles } from "lucide-react";
 import Link from "next/link";
 import type { StoreProduct } from "@/lib/commerce";
 import { quoteCopy, type QuoteLocale } from "@/lib/quotes/copy";
@@ -13,13 +13,15 @@ import {
   DialogDescription,
   DialogHeader,
   DialogTitle,
-  DialogTrigger,
 } from "@/components/ui/dialog";
-import { getMostRecentQuoteSession, saveQuoteSession } from "@/lib/quotes/client-sessions";
+import { saveQuoteSession } from "@/lib/quotes/client-sessions";
 import {
   InternationalQuotePromo,
   internationalQuoteCtaClassName,
+  internationalQuoteSecondaryCtaClassName,
 } from "@/components/quotes/InternationalQuotePromo";
+
+type RequestKind = "shipping" | "custom";
 
 export function ProductQuotePanel({
   product,
@@ -30,6 +32,7 @@ export function ProductQuotePanel({
 }) {
   const t = quoteCopy[locale];
   const [open, setOpen] = useState(false);
+  const [requestKind, setRequestKind] = useState<RequestKind>("shipping");
   const [step, setStep] = useState<"intro" | "chat">("intro");
   const [email, setEmail] = useState("");
   const [fullName, setFullName] = useState("");
@@ -47,6 +50,17 @@ export function ProductQuotePanel({
   const [accessToken, setAccessToken] = useState<string | null>(null);
   const startInFlightRef = useRef(false);
 
+  const openDialog = (kind: RequestKind) => {
+    setRequestKind(kind);
+    setStep("intro");
+    setError(null);
+    setOpen(true);
+  };
+
+  const dialogTitle = requestKind === "custom" ? t.dialogCustomTitle : t.dialogShippingTitle;
+  const dialogDescription =
+    requestKind === "custom" ? t.dialogCustomDescription : t.dialogShippingDescription;
+
   const startChat = async (event: React.FormEvent) => {
     event.preventDefault();
     if (startInFlightRef.current || starting) return;
@@ -54,27 +68,31 @@ export function ProductQuotePanel({
     setStarting(true);
     setError(null);
     try {
+      const payload: Record<string, unknown> = {
+        productSlug: product.slug,
+        productName: product.name,
+        productPart: product.part,
+        merchandiseId: product.merchandiseId,
+        variantSku: product.sku,
+        unitPriceCents: product.displayPriceCents ?? product.priceCents,
+        currency: product.displayCurrency ?? product.currency,
+        customerEmail: email,
+        customerName: fullName,
+        locale,
+        requestKind,
+      };
+      if (requestKind === "shipping") {
+        payload.country = intake.country;
+        payload.city = intake.city;
+        payload.postalCode = intake.postalCode;
+        payload.quantity = Number(intake.quantity);
+        payload.phone = intake.phone;
+        payload.notes = intake.notes;
+      }
       const response = await fetch("/api/quotes/start", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          productSlug: product.slug,
-          productName: product.name,
-          productPart: product.part,
-          merchandiseId: product.merchandiseId,
-          variantSku: product.sku,
-          unitPriceCents: product.displayPriceCents ?? product.priceCents,
-          currency: product.displayCurrency ?? product.currency,
-          customerEmail: email,
-          customerName: fullName,
-          locale,
-          country: intake.country,
-          city: intake.city,
-          postalCode: intake.postalCode,
-          quantity: Number(intake.quantity),
-          phone: intake.phone,
-          notes: intake.notes,
-        }),
+        body: JSON.stringify(payload),
       });
       const data = (await response.json()) as {
         error?: string;
@@ -102,44 +120,51 @@ export function ProductQuotePanel({
     }
   };
 
-  const resumeFromStorage = () => {
-    const recent = getMostRecentQuoteSession();
-    if (recent) {
-      setConversationId(recent.id);
-      setAccessToken(recent.token);
-      setStep("chat");
-      setOpen(true);
-    }
-  };
-
   return (
     <InternationalQuotePromo locale={locale}>
+      <div className="grid gap-2">
+        <button
+          className={internationalQuoteCtaClassName()}
+          type="button"
+          onClick={() => openDialog("shipping")}
+        >
+          <MessageSquare size={16} />
+          {t.shippingQuoteCta}
+        </button>
+        <button
+          className={internationalQuoteSecondaryCtaClassName()}
+          type="button"
+          onClick={() => openDialog("custom")}
+        >
+          <Sparkles size={16} />
+          {t.customOrderCta}
+        </button>
+      </div>
+
       <Dialog
         open={open}
         onOpenChange={(next) => {
           setOpen(next);
-          if (next && step === "intro") resumeFromStorage();
+          if (!next) setStep("intro");
         }}
       >
-        <DialogTrigger asChild>
-          <button className={internationalQuoteCtaClassName()} type="button">
-            <MessageSquare size={16} />
-            {t.requestCta}
-          </button>
-        </DialogTrigger>
         <DialogContent
           className={`max-h-[90svh] gap-0 overflow-x-hidden overflow-y-auto border-foreground/15 bg-panel p-0 text-foreground ${step === "chat" ? "sm:max-w-xl" : "sm:max-w-lg"}`}
         >
           <DialogHeader className="gap-1 border-b border-foreground/12 p-5 text-left">
             <DialogTitle className="font-display text-2xl font-bold uppercase leading-tight">
-              {step === "chat" ? product.name : t.internationalTitle}
+              {step === "chat" ? product.name : dialogTitle}
             </DialogTitle>
             <DialogDescription className="text-xs text-foreground/55">
               {step === "chat"
-                ? locale === "es"
-                  ? "Cotización internacional"
-                  : "International quote"
-                : product.name}
+                ? requestKind === "custom"
+                  ? locale === "es"
+                    ? "Pedido personalizado"
+                    : "Custom order"
+                  : locale === "es"
+                    ? "Cotización internacional"
+                    : "International quote"
+                : dialogDescription}
             </DialogDescription>
           </DialogHeader>
 
@@ -166,18 +191,20 @@ export function ProductQuotePanel({
                     required
                   />
                 </label>
-                <QuoteIntakeFields
-                  locale={locale}
-                  intake={intake}
-                  onChange={(patch) => setIntake((value) => ({ ...value, ...patch }))}
-                />
+                {requestKind === "shipping" ? (
+                  <QuoteIntakeFields
+                    locale={locale}
+                    intake={intake}
+                    onChange={(patch) => setIntake((value) => ({ ...value, ...patch }))}
+                  />
+                ) : null}
                 {error && <p className="text-xs text-red-400">{error}</p>}
                 <button
                   className="flex min-h-12 cursor-pointer items-center justify-center bg-brand text-[10px] font-black text-black uppercase disabled:opacity-50"
                   type="submit"
                   disabled={starting}
                 >
-                  {starting ? t.sending : t.submitRequest}
+                  {starting ? t.sending : requestKind === "shipping" ? t.submitRequest : t.openChat}
                 </button>
               </form>
             ) : conversationId && accessToken ? (
@@ -185,7 +212,7 @@ export function ProductQuotePanel({
                 <QuoteChat conversationId={conversationId} accessToken={accessToken} locale={locale} layout="compact" />
                 <Link
                   className="text-[10px] font-bold text-brand uppercase underline underline-offset-4"
-                  href={`/quotes/${conversationId}?token=${encodeURIComponent(accessToken)}`}
+                  href={`/quotes/${conversationId}?token=${encodeURIComponent(accessToken)}${locale === "es" ? "&lang=es" : ""}`}
                 >
                   {locale === "es" ? "Abrir en página completa" : "Open full page"}
                 </Link>

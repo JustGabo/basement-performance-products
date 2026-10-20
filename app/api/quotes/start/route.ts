@@ -21,6 +21,7 @@ type StartBody = {
   quantity?: number;
   phone?: string;
   notes?: string;
+  requestKind?: "shipping" | "custom";
 };
 
 export async function POST(request: Request) {
@@ -53,6 +54,7 @@ export async function POST(request: Request) {
     const postalCode = body.postalCode?.trim() ?? "";
     const quantity = Number(body.quantity ?? 1);
     const hasIntake = Boolean(country && city && postalCode);
+    const requestKind = body.requestKind === "custom" ? "custom" : "shipping";
 
     if (hasIntake && (!Number.isFinite(quantity) || quantity < 1 || quantity > 99)) {
       return NextResponse.json({ error: "Complete all required shipping fields." }, { status: 400 });
@@ -81,7 +83,10 @@ export async function POST(request: Request) {
           phone: body.phone,
           notes: body.notes,
         })
-      : await createConversation(conversationInput);
+      : await createConversation(conversationInput, {
+          welcome: "form",
+          welcomeKind: requestKind,
+        });
 
     const messages = await listMessages(conversation.id);
     return NextResponse.json({

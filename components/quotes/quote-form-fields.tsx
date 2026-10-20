@@ -82,6 +82,11 @@ export function QuoteIntakeFields({
           className={`${quoteFieldClass} min-h-20 py-2`}
           value={intake.notes}
           onChange={(event) => onChange({ notes: event.target.value })}
+          placeholder={
+            locale === "es"
+              ? "Pedido especial, acabado, urgencia…"
+              : "Special request, finish, timeline…"
+          }
         />
       </label>
     </>

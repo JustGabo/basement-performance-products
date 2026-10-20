@@ -2,11 +2,19 @@ export type QuoteLocale = "en" | "es";
 
 export const quoteCopy = {
   en: {
-    internationalTitle: "International custom order",
+    internationalTitle: "International & custom orders",
     internationalBody:
-      "Outside the United States? Get a personalized shipping quote before placing your order.",
-    internationalFooter: "Personalized shipping • International orders • Direct assistance",
-    requestCta: "Request a shipping quote",
+      "Outside the United States? Need a shipping quote? Or want something built to your spec? Start a chat — we’ll guide you from here.",
+    internationalFooter: "International shipping • Custom builds • Direct assistance",
+    requestCta: "Start a quote chat",
+    shippingQuoteCta: "International shipping quote",
+    customOrderCta: "Custom / personalized order",
+    dialogShippingTitle: "International shipping quote",
+    dialogShippingDescription:
+      "Tell us where the order is going. We’ll confirm shipping and send a personalized checkout link.",
+    dialogCustomTitle: "Custom / personalized order",
+    dialogCustomDescription:
+      "Describe the vehicle, parts, finish, or idea you have in mind. Our shop team replies in this chat.",
     openChat: "Continue in your quote chat",
     submitRequest: "Send quote request",
     contactSection: "Contact",
@@ -45,7 +53,9 @@ export const quoteCopy = {
     shipping: "International shipping",
     total: "Total",
     botWelcome: (productName: string) =>
-      `Thanks for your interest in ${productName}. To prepare an international shipping quote, send us:\n\n• Country\n• City / state\n• Postal code\n• Quantity\n• Full name\n\nUse the form below so we can reply faster.`,
+      `Thanks for your interest in ${productName}. To prepare an international shipping quote, send us your destination details using the form below:\n\n• Country\n• City / state\n• Postal code\n• Quantity\n\nAdd any notes if the order is special — we’ll confirm shipping and reply here.`,
+    botWelcomeCustom: (productName: string) =>
+      `Thanks for reaching out about a custom order${productName ? ` (reference: ${productName})` : ""}.\n\nTell us what you’re looking for — vehicle (year, make, model), parts, materials, finish, photos, timeline — and our team will reply in this chat.`,
     botChatOpened: (productName: string, customerName: string) =>
       `Hi ${customerName} — thanks for requesting a quote for ${productName}.`,
     botAfterIntake:
@@ -55,11 +65,19 @@ export const quoteCopy = {
     emailPreview: "Review your quote and pay securely through Shopify.",
   },
   es: {
-    internationalTitle: "Pedido internacional personalizado",
+    internationalTitle: "Pedidos internacionales y personalizados",
     internationalBody:
-      "¿Fuera de Estados Unidos? Obtén una cotización de envío personalizada antes de hacer tu pedido.",
-    internationalFooter: "Envío personalizado • Pedidos internacionales • Atención directa",
-    requestCta: "Solicitar cotización de envío",
+      "¿Fuera de Estados Unidos? ¿Necesitas cotización de envío? ¿O algo hecho a tu medida? Abre un chat y te guiamos desde aquí.",
+    internationalFooter: "Envío internacional • Pedidos a medida • Atención directa",
+    requestCta: "Abrir chat de cotización",
+    shippingQuoteCta: "Cotización de envío internacional",
+    customOrderCta: "Pedido personalizado",
+    dialogShippingTitle: "Cotización de envío internacional",
+    dialogShippingDescription:
+      "Cuéntanos a dónde va el pedido. Confirmaremos el envío y te enviaremos un link de checkout personalizado.",
+    dialogCustomTitle: "Pedido personalizado",
+    dialogCustomDescription:
+      "Describe el carro, las piezas, el acabado o la idea que tienes. El equipo del taller responde en este chat.",
     openChat: "Continuar en tu chat de cotización",
     submitRequest: "Enviar solicitud",
     contactSection: "Contacto",
@@ -98,7 +116,9 @@ export const quoteCopy = {
     shipping: "Envío internacional",
     total: "Total",
     botWelcome: (productName: string) =>
-      `Gracias por tu interés en ${productName}. Para preparar una cotización internacional, envíanos:\n\n• País\n• Ciudad / provincia\n• Código postal\n• Cantidad\n• Nombre completo\n\nUsa el formulario de abajo para responder más rápido.`,
+      `Gracias por tu interés en ${productName}. Para preparar una cotización de envío internacional, envíanos los datos de destino con el formulario de abajo:\n\n• País\n• Ciudad / provincia\n• Código postal\n• Cantidad\n\nSi el pedido es especial, déjalo en notas — confirmaremos el envío y te respondemos aquí.`,
+    botWelcomeCustom: (productName: string) =>
+      `Gracias por escribir sobre un pedido personalizado${productName ? ` (referencia: ${productName})` : ""}.\n\nCuéntanos qué buscas — carro (año, marca, modelo), piezas, materiales, acabado, fotos, tiempos — y nuestro equipo responderá en este chat.`,
     botChatOpened: (productName: string, customerName: string) =>
       `Hola ${customerName} — gracias por solicitar una cotización de ${productName}.`,
     botAfterIntake:

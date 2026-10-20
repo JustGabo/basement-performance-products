@@ -110,11 +110,14 @@ export async function createConversation(
     customerName: string;
     locale: QuoteLocale;
   },
-  options?: { welcome: "form" | "none" },
+  options?: { welcome: "form" | "none"; welcomeKind?: "shipping" | "custom" },
 ) {
   const locale = input.locale;
   const t = quoteCopy[locale];
   const welcome = options?.welcome ?? "form";
+  const welcomeKind = options?.welcomeKind ?? "shipping";
+  const initialStatus: QuoteConversationStatus =
+    welcome === "form" && welcomeKind === "custom" ? "reviewing" : "collecting";
 
   const { data, error } = await admin()
     .from("quote_conversations")
@@ -129,7 +132,7 @@ export async function createConversation(
       customer_email: input.customerEmail.trim().toLowerCase(),
       customer_name: input.customerName.trim(),
       locale,
-      status: "collecting",
+      status: initialStatus,
     })
     .select("*")
     .single();
@@ -140,7 +143,10 @@ export async function createConversation(
     await insertMessage({
       conversationId: conversation.id,
       role: "bot",
-      body: t.botWelcome(input.productName),
+      body:
+        welcomeKind === "custom"
+          ? t.botWelcomeCustom(input.productName)
+          : t.botWelcome(input.productName),
     });
   }
   return conversation;

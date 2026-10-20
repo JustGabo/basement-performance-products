@@ -8,6 +8,12 @@ export function internationalQuoteCtaClassName(compact?: boolean) {
     : "flex min-h-12 w-full cursor-pointer items-center justify-center gap-2 bg-brand px-4 text-[10px] font-black tracking-[.06em] text-black uppercase transition hover:bg-[#d99f00]";
 }
 
+export function internationalQuoteSecondaryCtaClassName(compact?: boolean) {
+  return compact
+    ? "flex min-h-11 w-full cursor-pointer items-center justify-center gap-2 border border-brand/55 bg-transparent px-4 text-[9px] font-black tracking-[.05em] text-brand uppercase transition hover:border-brand hover:bg-brand/10"
+    : "flex min-h-12 w-full cursor-pointer items-center justify-center gap-2 border border-brand/55 bg-transparent px-4 text-[10px] font-black tracking-[.06em] text-brand uppercase transition hover:border-brand hover:bg-brand/10";
+}
+
 export function InternationalQuotePromo({
   locale,
   children,

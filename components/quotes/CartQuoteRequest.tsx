@@ -2,7 +2,7 @@
 
 import { useRef, useState } from "react";
 import Link from "next/link";
-import { MessageSquare } from "lucide-react";
+import { MessageSquare, Sparkles } from "lucide-react";
 import type { CartItem } from "@/components/cart/CartProvider";
 import { quoteCopy, type QuoteLocale } from "@/lib/quotes/copy";
 import { QuoteIntakeFields, quoteFieldClass, quoteLabelClass } from "@/components/quotes/quote-form-fields";
@@ -10,6 +10,7 @@ import { saveQuoteSession } from "@/lib/quotes/client-sessions";
 import {
   InternationalQuotePromo,
   internationalQuoteCtaClassName,
+  internationalQuoteSecondaryCtaClassName,
 } from "@/components/quotes/InternationalQuotePromo";
 import {
   Dialog,
@@ -17,12 +18,15 @@ import {
   DialogDescription,
   DialogHeader,
   DialogTitle,
-  DialogTrigger,
 } from "@/components/ui/dialog";
+
+type RequestKind = "shipping" | "custom";
+type Locale = QuoteLocale;
 
 export function CartQuoteRequest({ items, locale }: { items: CartItem[]; locale: Locale }) {
   const t = quoteCopy[locale];
   const [open, setOpen] = useState(false);
+  const [requestKind, setRequestKind] = useState<RequestKind>("shipping");
   const [productId, setProductId] = useState(items[0]?.product.id ?? "");
   const [email, setEmail] = useState("");
   const [fullName, setFullName] = useState("");
@@ -30,7 +34,7 @@ export function CartQuoteRequest({ items, locale }: { items: CartItem[]; locale:
     country: "",
     city: "",
     postalCode: "",
-    quantity: "1",
+    quantity: String(items[0]?.quantity ?? 1),
     phone: "",
     notes: "",
   });
@@ -41,6 +45,16 @@ export function CartQuoteRequest({ items, locale }: { items: CartItem[]; locale:
   const selected = items.find((item) => item.product.id === productId) ?? items[0];
   if (!selected) return null;
 
+  const dialogTitle = requestKind === "custom" ? t.dialogCustomTitle : t.dialogShippingTitle;
+  const dialogDescription =
+    requestKind === "custom" ? t.dialogCustomDescription : t.dialogShippingDescription;
+
+  const openDialog = (kind: RequestKind) => {
+    setRequestKind(kind);
+    setError(null);
+    setOpen(true);
+  };
+
   const startQuote = async (event: React.FormEvent) => {
     event.preventDefault();
     if (startInFlightRef.current || starting) return;
@@ -49,27 +63,31 @@ export function CartQuoteRequest({ items, locale }: { items: CartItem[]; locale:
     setError(null);
     try {
       const product = selected.product;
+      const payload: Record<string, unknown> = {
+        productSlug: product.slug,
+        productName: product.name,
+        productPart: product.part,
+        merchandiseId: product.merchandiseId,
+        variantSku: product.sku,
+        unitPriceCents: product.displayPriceCents ?? product.priceCents,
+        currency: product.displayCurrency ?? product.currency,
+        customerEmail: email,
+        customerName: fullName,
+        locale,
+        requestKind,
+      };
+      if (requestKind === "shipping") {
+        payload.country = intake.country;
+        payload.city = intake.city;
+        payload.postalCode = intake.postalCode;
+        payload.quantity = Number(intake.quantity);
+        payload.phone = intake.phone;
+        payload.notes = intake.notes;
+      }
       const response = await fetch("/api/quotes/start", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          productSlug: product.slug,
-          productName: product.name,
-          productPart: product.part,
-          merchandiseId: product.merchandiseId,
-          variantSku: product.sku,
-          unitPriceCents: product.displayPriceCents ?? product.priceCents,
-          currency: product.displayCurrency ?? product.currency,
-          customerEmail: email,
-          customerName: fullName,
-          locale,
-          country: intake.country,
-          city: intake.city,
-          postalCode: intake.postalCode,
-          quantity: Number(intake.quantity),
-          phone: intake.phone,
-          notes: intake.notes,
-        }),
+        body: JSON.stringify(payload),
       });
       const data = (await response.json()) as {
         error?: string;
@@ -97,67 +115,84 @@ export function CartQuoteRequest({ items, locale }: { items: CartItem[]; locale:
 
   return (
     <InternationalQuotePromo compact locale={locale}>
+      <div className="grid gap-2">
+        <button
+          className={internationalQuoteCtaClassName(true)}
+          type="button"
+          onClick={() => openDialog("shipping")}
+        >
+          <MessageSquare size={15} />
+          {t.shippingQuoteCta}
+        </button>
+        <button
+          className={internationalQuoteSecondaryCtaClassName(true)}
+          type="button"
+          onClick={() => openDialog("custom")}
+        >
+          <Sparkles size={15} />
+          {t.customOrderCta}
+        </button>
+      </div>
+
       <Dialog open={open} onOpenChange={setOpen}>
-        <DialogTrigger asChild>
-          <button className={internationalQuoteCtaClassName(true)} type="button">
-            <MessageSquare size={15} />
-            {t.requestCta}
-          </button>
-        </DialogTrigger>
-      <DialogContent className="max-h-[90svh] overflow-x-hidden overflow-y-auto border-foreground/15 bg-panel sm:max-w-lg">
-        <DialogHeader>
-          <DialogTitle className="font-display text-2xl font-bold uppercase">{t.internationalTitle}</DialogTitle>
-          <DialogDescription className="text-xs text-foreground/55">{t.internationalBody}</DialogDescription>
-        </DialogHeader>
-        <form className="flex min-w-0 flex-col gap-4 overflow-x-hidden" onSubmit={startQuote}>
-          {items.length > 1 ? (
+        <DialogContent className="max-h-[90svh] overflow-x-hidden overflow-y-auto border-foreground/15 bg-panel sm:max-w-lg">
+          <DialogHeader>
+            <DialogTitle className="font-display text-2xl font-bold uppercase">{dialogTitle}</DialogTitle>
+            <DialogDescription className="text-xs text-foreground/55">{dialogDescription}</DialogDescription>
+          </DialogHeader>
+          <form className="flex min-w-0 flex-col gap-4 overflow-x-hidden" onSubmit={startQuote}>
+            {items.length > 1 && requestKind === "shipping" ? (
+              <label className={quoteLabelClass}>
+                {locale === "es" ? "Producto a cotizar" : "Product to quote"}
+                <select
+                  className={quoteFieldClass}
+                  value={productId}
+                  onChange={(event) => {
+                    setProductId(event.target.value);
+                    const line = items.find((item) => item.product.id === event.target.value);
+                    if (line) setIntake((value) => ({ ...value, quantity: String(line.quantity) }));
+                  }}
+                >
+                  {items.map(({ product, quantity }) => (
+                    <option key={product.id} value={product.id}>
+                      {product.name} ({quantity}×)
+                    </option>
+                  ))}
+                </select>
+              </label>
+            ) : null}
             <label className={quoteLabelClass}>
-              {locale === "es" ? "Producto a cotizar" : "Product to quote"}
-              <select
-                className={quoteFieldClass}
-                value={productId}
-                onChange={(event) => {
-                  setProductId(event.target.value);
-                  const line = items.find((item) => item.product.id === event.target.value);
-                  if (line) setIntake((value) => ({ ...value, quantity: String(line.quantity) }));
-                }}
-              >
-                {items.map(({ product, quantity }) => (
-                  <option key={product.id} value={product.id}>
-                    {product.name} ({quantity}×)
-                  </option>
-                ))}
-              </select>
+              {t.email}
+              <input className={quoteFieldClass} type="email" value={email} onChange={(e) => setEmail(e.target.value)} required />
             </label>
-          ) : null}
-          <label className={quoteLabelClass}>
-            {t.email}
-            <input className={quoteFieldClass} type="email" value={email} onChange={(e) => setEmail(e.target.value)} required />
-          </label>
-          <label className={quoteLabelClass}>
-            {t.fullName}
-            <input className={quoteFieldClass} value={fullName} onChange={(e) => setFullName(e.target.value)} required />
-          </label>
-          <QuoteIntakeFields locale={locale} intake={intake} onChange={(patch) => setIntake((value) => ({ ...value, ...patch }))} />
-          {error && <p className="text-xs text-red-400">{error}</p>}
-          <button
-            className="flex min-h-12 cursor-pointer items-center justify-center bg-brand text-[10px] font-black text-black uppercase disabled:opacity-50"
-            type="submit"
-            disabled={starting}
-          >
-            {starting ? t.sending : t.submitRequest}
-          </button>
-          <p className="text-center text-[10px] text-foreground/40">
-            {locale === "es" ? "También disponible en " : "Also available on "}
-            <Link className="text-brand underline underline-offset-2" href={`/products/${selected.product.slug}`}>
-              {locale === "es" ? "la ficha del producto" : "each product page"}
-            </Link>
-          </p>
-        </form>
-      </DialogContent>
+            <label className={quoteLabelClass}>
+              {t.fullName}
+              <input className={quoteFieldClass} value={fullName} onChange={(e) => setFullName(e.target.value)} required />
+            </label>
+            {requestKind === "shipping" ? (
+              <QuoteIntakeFields
+                locale={locale}
+                intake={intake}
+                onChange={(patch) => setIntake((value) => ({ ...value, ...patch }))}
+              />
+            ) : null}
+            {error && <p className="text-xs text-red-400">{error}</p>}
+            <button
+              className="flex min-h-12 cursor-pointer items-center justify-center bg-brand text-[10px] font-black text-black uppercase disabled:opacity-50"
+              type="submit"
+              disabled={starting}
+            >
+              {starting ? t.sending : requestKind === "shipping" ? t.submitRequest : t.openChat}
+            </button>
+            <p className="text-center text-[10px] text-foreground/40">
+              {locale === "es" ? "También disponible en " : "Also available on "}
+              <Link className="text-brand underline underline-offset-2" href={`/products/${selected.product.slug}`}>
+                {locale === "es" ? "la ficha del producto" : "each product page"}
+              </Link>
+            </p>
+          </form>
+        </DialogContent>
       </Dialog>
     </InternationalQuotePromo>
   );
 }
-
-type Locale = QuoteLocale;
