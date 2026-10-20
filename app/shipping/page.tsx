@@ -1,12 +1,13 @@
-import type { Metadata } from "next";
 import { ContentPage } from "@/components/site/ContentPage";
-import { shareMetadata } from "@/lib/seo";
+import { generatePublicPageMetadata } from "@/lib/seo-page-metadata";
 
-export const metadata: Metadata = shareMetadata({
-  title: "Shipping",
-  description: "How Basement packs and ships parts from the Dominican Republic.",
-  path: "/shipping",
-});
+export async function generateMetadata({
+  searchParams,
+}: {
+  searchParams: Promise<Record<string, string | string[] | undefined>>;
+}) {
+  return generatePublicPageMetadata("shipping", "/shipping", searchParams);
+}
 
 export default function ShippingPage() {
   return <ContentPage

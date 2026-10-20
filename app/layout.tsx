@@ -8,6 +8,7 @@ import { ThemeProvider } from "@/components/theme/ThemeProvider";
 import { Toaster } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { MarketProvider } from "@/components/market/MarketProvider";
+import { getStoreLocale } from "@/lib/commerce/locale";
 import { getMarketCountry } from "@/lib/commerce/market";
 import { PwaRegister } from "@/components/pwa/PwaRegister";
 import { pwaShortName, pwaThemeColor } from "@/lib/pwa/config";
@@ -69,9 +70,9 @@ export const viewport: Viewport = {
 };
 
 export default async function RootLayout({ children }: { children: ReactNode }) {
-  const marketCountry = await getMarketCountry();
+  const [marketCountry, locale] = await Promise.all([getMarketCountry(), getStoreLocale()]);
   return (
-    <html lang="en" className={`${geist.variable} ${oswald.variable} dark`} suppressHydrationWarning>
+    <html lang={locale} className={`${geist.variable} ${oswald.variable} dark`} suppressHydrationWarning>
       <body>
         <Script id="basement-theme-init" strategy="beforeInteractive">
           {`try{var t=localStorage.getItem('basement-theme')||'dark';document.documentElement.classList.toggle('dark',t==='dark');document.documentElement.style.colorScheme=t}catch(e){}`}

@@ -1,12 +1,13 @@
-import type { Metadata } from "next";
 import { ContentPage } from "@/components/site/ContentPage";
-import { shareMetadata } from "@/lib/seo";
+import { generatePublicPageMetadata } from "@/lib/seo-page-metadata";
 
-export const metadata: Metadata = shareMetadata({
-  title: "Privacy Policy",
-  description: "What Basement collects when you shop, and what we do with it.",
-  path: "/privacy",
-});
+export async function generateMetadata({
+  searchParams,
+}: {
+  searchParams: Promise<Record<string, string | string[] | undefined>>;
+}) {
+  return generatePublicPageMetadata("privacy", "/privacy", searchParams);
+}
 
 export default function PrivacyPage() {
   return <ContentPage

@@ -3,14 +3,15 @@ import { listCatalogProducts } from "@/lib/commerce/server";
 import { getHomepageContent } from "@/lib/home-content";
 import { getMarketCountry } from "@/lib/commerce/market";
 import { getStoreLocale } from "@/lib/commerce/locale";
-import { shareMetadata, siteDescription, siteName, siteTagline } from "@/lib/seo";
+import { generatePublicPageMetadata } from "@/lib/seo-page-metadata";
 
-export const metadata = shareMetadata({
-  title: `${siteName} — ${siteTagline}`,
-  description: siteDescription,
-  path: "/",
-  absoluteTitle: true,
-});
+export async function generateMetadata({
+  searchParams,
+}: {
+  searchParams: Promise<Record<string, string | string[] | undefined>>;
+}) {
+  return generatePublicPageMetadata("home", "/", searchParams);
+}
 
 export default async function Home() {
   const [country, locale] = await Promise.all([

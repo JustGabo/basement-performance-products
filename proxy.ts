@@ -20,6 +20,14 @@ export async function proxy(request: NextRequest) {
     },
   );
   const response = await updateSession(request);
+  const lang = request.nextUrl.searchParams.get("lang");
+  if (lang === "es" || lang === "en") {
+    response.cookies.set("basement-locale", lang, {
+      path: "/",
+      maxAge: 60 * 60 * 24 * 365,
+      sameSite: "lax",
+    });
+  }
   if (sessionUpdate && "clear" in sessionUpdate) response.cookies.delete(CUSTOMER_SESSION_COOKIE);
   if (sessionUpdate && "value" in sessionUpdate) {
     response.cookies.set(CUSTOMER_SESSION_COOKIE, sessionUpdate.value, {

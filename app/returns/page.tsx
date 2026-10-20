@@ -1,12 +1,13 @@
-import type { Metadata } from "next";
 import { ContentPage } from "@/components/site/ContentPage";
-import { shareMetadata } from "@/lib/seo";
+import { generatePublicPageMetadata } from "@/lib/seo-page-metadata";
 
-export const metadata: Metadata = shareMetadata({
-  title: "Returns",
-  description: "How returns work for unused Basement parts, and what can’t come back.",
-  path: "/returns",
-});
+export async function generateMetadata({
+  searchParams,
+}: {
+  searchParams: Promise<Record<string, string | string[] | undefined>>;
+}) {
+  return generatePublicPageMetadata("returns", "/returns", searchParams);
+}
 
 export default function ReturnsPage() {
   return <ContentPage

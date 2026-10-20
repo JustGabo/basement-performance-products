@@ -1,18 +1,19 @@
-import type { Metadata } from "next";
 import { CatalogMessage } from "@/components/shop/CatalogMessage";
 import { ShopCatalog } from "@/components/shop/ShopCatalog";
 import { listCatalogProducts } from "@/lib/commerce/server";
 import { getMarketCountry } from "@/lib/commerce/market";
 import { getStoreLocale } from "@/lib/commerce/locale";
 import { JsonLd } from "@/components/seo/JsonLd";
-import { absoluteUrl, itemListJsonLd, shareMetadata } from "@/lib/seo";
+import { absoluteUrl, itemListJsonLd } from "@/lib/seo";
+import { generatePublicPageMetadata } from "@/lib/seo-page-metadata";
 
-export const metadata: Metadata = shareMetadata({
-  title: "Shop Carbon Fiber & Aero",
-  description:
-    "Browse fiberglass and carbon fiber body kits, splitters, side skirts and aero parts. Filter by vehicle and part type.",
-  path: "/shop",
-});
+export async function generateMetadata({
+  searchParams,
+}: {
+  searchParams: Promise<Record<string, string | string[] | undefined>>;
+}) {
+  return generatePublicPageMetadata("shop", "/shop", searchParams);
+}
 
 export default async function ShopPage({ searchParams }: PageProps<"/shop">) {
   const params = await searchParams;

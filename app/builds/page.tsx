@@ -1,14 +1,15 @@
-import type { Metadata } from "next";
 import { BuildsIndex } from "@/components/builds/BuildsIndex";
 import { getStoreLocale } from "@/lib/commerce/locale";
 import { getVehicleBuilds } from "@/lib/home-content";
-import { shareMetadata } from "@/lib/seo";
+import { generatePublicPageMetadata } from "@/lib/seo-page-metadata";
 
-export const metadata: Metadata = shareMetadata({
-  title: "Community Builds",
-  description: "Explore customer cars and fiberglass modifications built in the Basement community.",
-  path: "/builds",
-});
+export async function generateMetadata({
+  searchParams,
+}: {
+  searchParams: Promise<Record<string, string | string[] | undefined>>;
+}) {
+  return generatePublicPageMetadata("builds", "/builds", searchParams);
+}
 
 export default async function BuildsPage() {
   const [builds, locale] = await Promise.all([getVehicleBuilds(), getStoreLocale()]);

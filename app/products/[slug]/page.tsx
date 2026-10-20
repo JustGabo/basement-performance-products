@@ -5,28 +5,40 @@ import { ProductDetail } from "@/components/products/ProductDetail";
 import { CatalogMessage } from "@/components/shop/CatalogMessage";
 import { getCatalog, getCatalogProduct } from "@/lib/commerce/server";
 import { getMarketCountry } from "@/lib/commerce/market";
-import { getStoreLocale } from "@/lib/commerce/locale";
+import { getStoreLocale, resolveStoreLocale } from "@/lib/commerce/locale";
 import { breadcrumbJsonLd, privateMetadata, productJsonLd, shareMetadata } from "@/lib/seo";
 
-type ProductPageProps = { params: Promise<{ slug: string }> };
+type ProductPageProps = {
+  params: Promise<{ slug: string }>;
+  searchParams: Promise<Record<string, string | string[] | undefined>>;
+};
 
-export async function generateMetadata({ params }: ProductPageProps): Promise<Metadata> {
+export async function generateMetadata({ params, searchParams }: ProductPageProps): Promise<Metadata> {
   const { slug } = await params;
+  const query = await searchParams;
   const [country, locale] = await Promise.all([
     getMarketCountry(),
-    getStoreLocale(),
+    resolveStoreLocale(query),
   ]);
   const { product, unavailable } = await getCatalogProduct(slug, country, locale);
   if (unavailable) return { title: "Products unavailable", ...privateMetadata };
   if (!product) return { title: "Product not found", ...privateMetadata };
 
-  return shareMetadata({
-    title: product.name,
-    description: product.description || product.part,
-    path: `/products/${product.slug}`,
-    image: product.image,
-    imageAlt: product.name,
-  });
+  const description =
+    locale === "es"
+      ? `${product.description || product.part}. Aero en fibra de vidrio y carbono con envío internacional.`
+      : product.description || product.part;
+
+  return shareMetadata(
+    {
+      title: product.name,
+      description,
+      path: `/products/${product.slug}`,
+      image: product.image,
+      imageAlt: product.name,
+    },
+    locale,
+  );
 }
 
 export default async function ProductPage({ params }: ProductPageProps) {

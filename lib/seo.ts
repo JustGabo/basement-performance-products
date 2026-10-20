@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import type { StoreLocale } from "@/lib/commerce/locale";
 import type { StoreProduct } from "@/lib/commerce/domain";
 
 export const siteName = "Basement Performance Products";
@@ -50,34 +51,67 @@ export function absoluteImage(src: string) {
   return src.startsWith("http://") || src.startsWith("https://") ? src : absoluteUrl(src);
 }
 
-export function shareMetadata({
-  title,
-  description,
-  path,
-  image = defaultOgImage,
-  imageAlt,
-  absoluteTitle = false,
-}: {
-  title: string;
-  description: string;
-  path: string;
-  image?: string;
-  imageAlt?: string;
-  absoluteTitle?: boolean;
-}): Metadata {
+/** Base path without query — English is the default URL. */
+export function normalizeSeoPath(path: string) {
+  return path.split("?")[0] || "/";
+}
+
+export function localizedSeoPath(path: string, locale: StoreLocale) {
+  const base = normalizeSeoPath(path);
+  if (locale === "en") return base;
+  const url = new URL(base, siteUrl());
+  url.searchParams.set("lang", "es");
+  return `${url.pathname}${url.search}`;
+}
+
+export function hreflangAlternates(path: string) {
+  const base = normalizeSeoPath(path);
+  return {
+    en: absoluteUrl(base),
+    es: absoluteUrl(localizedSeoPath(base, "es")),
+    "x-default": absoluteUrl(base),
+  };
+}
+
+export function shareMetadata(
+  {
+    title,
+    description,
+    path,
+    image = defaultOgImage,
+    imageAlt,
+    absoluteTitle = false,
+  }: {
+    title: string;
+    description: string;
+    path: string;
+    image?: string;
+    imageAlt?: string;
+    absoluteTitle?: boolean;
+  },
+  locale: StoreLocale = "en",
+): Metadata {
   const socialTitle = absoluteTitle ? title : `${title} | ${siteName}`;
   const ogImage = absoluteImage(image);
-  const canonical = absoluteUrl(path);
+  const basePath = normalizeSeoPath(path);
+  const canonicalPath = localizedSeoPath(basePath, locale);
+  const canonical = absoluteUrl(canonicalPath);
+  const ogLocale = locale === "es" ? "es_DO" : "en_US";
+  const ogAlternate = locale === "es" ? ["en_US"] : ["es_DO"];
 
   return {
     title: absoluteTitle ? { absolute: title } : title,
     description,
     robots: publicRobots,
-    alternates: { canonical },
+    alternates: {
+      canonical,
+      languages: hreflangAlternates(basePath),
+    },
     openGraph: {
       type: "website",
       siteName,
-      locale: "en_US",
+      locale: ogLocale,
+      alternateLocale: ogAlternate,
       url: canonical,
       title: socialTitle,
       description,
@@ -115,6 +149,7 @@ export function websiteJsonLd() {
     name: siteName,
     url: siteUrl(),
     description: siteDescription,
+    inLanguage: ["en-US", "es-DO"],
     publisher: { "@type": "Organization", name: siteName, url: siteUrl() },
     potentialAction: {
       "@type": "SearchAction",
