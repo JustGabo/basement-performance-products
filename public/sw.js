@@ -1,5 +1,5 @@
 /* Basement PWA — minimal service worker for installability + offline shell */
-const CACHE = "basement-pwa-v1";
+const CACHE = "basement-pwa-v2";
 const OFFLINE_URL = "/~offline";
 
 self.addEventListener("install", (event) => {
